@@ -12,6 +12,9 @@ $env:JAVA_HOME = "C:\Program Files\Java\jdk-26.0.2"
 Push-Location $projectRoot
 try {
     & "E:\gradle-9.6.1\bin\gradle.bat" build --offline --no-daemon
+    if ($LASTEXITCODE -ne 0) {
+        throw "Gradle 构建失败，已停止部署"
+    }
 }
 finally {
     Pop-Location

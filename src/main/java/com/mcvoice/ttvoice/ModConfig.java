@@ -22,7 +22,7 @@ public final class ModConfig {
         public boolean externalServiceTts = false;
         public float serviceVolume = 100.0f;
         public String serviceMode = "edge";
-        public String serviceUrl = "https://v1.apizero.cn/api/tts";
+        public String serviceUrl = "https://ttsapi.cn";
         public String serviceApiKey = "";
         public String serviceVoice = "female_zhubo";
         public String serviceModel = "";

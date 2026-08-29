@@ -5,6 +5,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.mcvoice.ttvoice.TtVoiceClient;
 
+import java.io.IOException;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.net.http.HttpClient;
@@ -14,13 +15,14 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Base64;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public final class ExternalServiceEngine implements TtsEngine {
     private static final Gson GSON = new Gson();
-    private static final String DEFAULT_FREE_BASE = "https://v1.apizero.cn/api/tts";
+    private static final String DEFAULT_FREE_BASE = "https://ttsapi.cn";
     private static final String DEFAULT_FREE_VOICE = "zh-CN-XiaoyiNeural";
     private static final String DEFAULT_APIZERO_VOICE = "female_zhubo";
     private static final Pattern NONCE_PATTERN =
@@ -74,12 +76,24 @@ public final class ExternalServiceEngine implements TtsEngine {
 
     private short[] synthesizeFree(HttpClient client, String text) throws Exception {
         if (isApizero()) {
-            return synthesizeApizero(client, text);
+            try {
+                return synthesizeApizero(client, text);
+            } catch (Exception e) {
+                if (!isRateLimit(e)) {
+                    throw e;
+                }
+                return synthesizeFreeFallback(client, text);
+            }
         }
         String base = normalizeBase(url);
         boolean edgeHost = base.toLowerCase().contains("edge.text-to-speech.cn");
+        return synthesizeGenericFree(client, text, base, edgeHost, emptyTo(voice, DEFAULT_FREE_VOICE));
+    }
+
+    private short[] synthesizeGenericFree(HttpClient client, String text, String base, boolean edgeHost, String voice)
+            throws Exception {
         String token = fetchToken(client, base, edgeHost);
-        String payload = buildFreePayload(text, token, edgeHost);
+        String payload = buildFreePayload(text, token, edgeHost, voice);
         String json = sendFreeRequest(client, base, payload, token, edgeHost);
 
         JsonObject object = JsonParser.parseString(json).getAsJsonObject();
@@ -101,8 +115,26 @@ public final class ExternalServiceEngine implements TtsEngine {
         return AudioUtil.readAudio(audioResponse.body());
     }
 
+    private short[] synthesizeFreeFallback(HttpClient client, String text) throws Exception {
+        List<String> fallbackHosts = List.of(
+            "https://ttsapi.cn",
+            "https://ttsbox.cn",
+            "https://edge.text-to-speech.cn"
+        );
+        Exception lastError = null;
+        for (String base : fallbackHosts) {
+            boolean edgeHost = base.contains("edge.text-to-speech.cn");
+            try {
+                return synthesizeGenericFree(client, text, base, edgeHost, fallbackVoice());
+            } catch (Exception e) {
+                lastError = e;
+            }
+        }
+        throw new IOException("所有免费TTS服务都失败：" + lastError.getMessage(), lastError);
+    }
+
     private boolean isApizero() {
-        return url == null || url.isBlank() || url.toLowerCase().contains("apizero.cn");
+        return url != null && url.toLowerCase().contains("apizero.cn");
     }
 
     private short[] synthesizeApizero(HttpClient client, String text) throws Exception {
@@ -158,10 +190,10 @@ public final class ExternalServiceEngine implements TtsEngine {
         return matcher.group(1);
     }
 
-    private String buildFreePayload(String text, String token, boolean edgeHost) {
+    private String buildFreePayload(String text, String token, boolean edgeHost, String voice) {
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("text", text);
-        payload.put("voice", emptyTo(voice, DEFAULT_FREE_VOICE));
+        payload.put("voice", voice);
         payload.put("rate", 1);
         payload.put("pitch", 1);
         payload.put("volume", serviceVolumePercent());
@@ -169,6 +201,21 @@ public final class ExternalServiceEngine implements TtsEngine {
             payload.put("nonce", token);
         }
         return GSON.toJson(payload);
+    }
+
+    private String fallbackVoice() {
+        String configured = emptyTo(voice, DEFAULT_FREE_VOICE);
+        if (configured.startsWith("zh-CN-")) {
+            return configured;
+        }
+        return DEFAULT_FREE_VOICE;
+    }
+
+    private static boolean isRateLimit(Exception e) {
+        return e != null
+            && e instanceof IllegalStateException
+            && e.getMessage() != null
+            && e.getMessage().contains("429");
     }
 
     private static String sendFreeRequest(HttpClient client, String base, String payload, String token, boolean edgeHost)

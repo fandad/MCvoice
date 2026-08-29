@@ -87,11 +87,11 @@ edge-tts --voice zh-CN-XiaoxiaoNeural --text "{text}" --write-media "{file}"
 
 在“高级设置”里打开“外部TTS服务设置”，有三种请求方式：
 
-- 免费 TTS（内置）：默认使用 `https://v1.apizero.cn/api/tts`，无需 API Key。
+- 免费 TTS（内置）：默认使用 `https://ttsapi.cn`，无需 API Key。
 - URL 模板：适合自建 GET 接口。
 - OpenAI 兼容：适合 OpenAI 或兼容服务的 `/audio/speech` 接口。
 
-免费 TTS 模式也支持把服务地址改为 `https://ttsapi.cn`、`https://ttsbox.cn` 或 `https://edge.text-to-speech.cn`。
+免费 TTS 模式也支持把服务地址改为 `https://ttsapi.cn`、`https://ttsbox.cn` 或 `https://edge.text-to-speech.cn`。如果配置的是 `apizero` 接口且连续请求被限流，模组会自动切换备用免费服务。
 免费模式下会隐藏 API Key 和模型输入框，音色改为点击切换。
 
 外部 TTS 服务设置里新增“服务输出音量”滑条，范围 0%-200%，三种请求方式都会生效。

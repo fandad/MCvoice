@@ -201,7 +201,7 @@ public class ExternalTtsServiceScreen extends Screen {
 
     private String urlHint() {
         if (freeMode()) {
-            return "https://v1.apizero.cn/api/tts";
+            return "https://ttsapi.cn";
         }
         return "openai".equalsIgnoreCase(ModConfig.get().serviceMode)
             ? "https://api.openai.com/v1/audio/speech"
