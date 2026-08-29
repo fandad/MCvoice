@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "id": "mcvoice",
+  "version": "${version}",
+  "name": "MC语音",
+  "description": "在聊天框输入文字，通过 Simple Voice Chat 让服务器里的其他玩家听到你的本地中文语音。",
+  "authors": [
+    "MCvoice"
+  ],
+  "license": "MIT",
+  "icon": "assets/mcvoice/textures/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "com.mcvoice.ttvoice.TtVoiceClient"
+    ],
+    "voicechat": [
+      "com.mcvoice.ttvoice.VcPlugin"
+    ],
+    "modmenu": [
+      "com.mcvoice.ttvoice.ModMenuEntry"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.19.3",
+    "minecraft": ">=26.2 <26.3",
+    "java": ">=25",
+    "fabric-api": "*",
+    "voicechat": ">=2.6.22+26.2"
+  },
+  "suggests": {
+    "modmenu": ">=20.0.1"
+  }
+}

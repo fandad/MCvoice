@@ -1,0 +1,7 @@
+.gradle/
+build/
+run/
+libs/fabric-api/
+libs/*.jar
+*.iml
+.idea/
