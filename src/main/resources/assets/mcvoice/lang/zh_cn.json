@@ -43,6 +43,7 @@
   "config.mcvoice.external.service.enable.tooltip": "启用后通过 HTTP 请求生成语音。",
   "config.mcvoice.external.service.tooltip": "配置外部 TTS 服务。",
   "config.mcvoice.external.service.mode.tooltip": "点击切换 URL模板、OpenAI兼容或免费 TTS。",
+  "config.mcvoice.external.service.route.tooltip": "点击切换免费 TTS 线路；地址框留空时会自动填回默认线路。",
   "config.mcvoice.external.service.volume.tooltip": "三种模式都会生效；免费模式传给服务，其他模式放大返回音频。",
   "config.mcvoice.external.service.url.label": "服务地址",
   "config.mcvoice.external.service.url.hint": "http://127.0.0.1:9880?text={text}&voice={voice}",

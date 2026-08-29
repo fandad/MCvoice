@@ -17,6 +17,7 @@ import java.nio.file.StandardCopyOption;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 public final class SherpaModelDownloader {
     public interface ProgressListener {
@@ -63,7 +64,7 @@ public final class SherpaModelDownloader {
         }
 
         listener.update("正在解压 " + model.displayName() + " ...");
-        extract(archive, targetDir);
+        extract(archive, targetDir, listener);
         Files.deleteIfExists(archive);
         listener.update("完成：" + model.displayName() + " 已放入 mcvoice/models/sherpa");
     }
@@ -136,13 +137,50 @@ public final class SherpaModelDownloader {
         throw new IOException("所有下载源都失败了：" + lastError.getMessage(), lastError);
     }
 
-    private static void extract(Path archive, Path targetDir) throws IOException {
+    private static void extract(Path archive, Path targetDir, ProgressListener listener) throws IOException {
+        if (trySystemTar(archive, targetDir)) {
+            return;
+        }
+        extractWithJava(archive, targetDir, listener);
+    }
+
+    private static boolean trySystemTar(Path archive, Path targetDir) {
+        try {
+            ProcessBuilder builder = new ProcessBuilder(
+                "tar",
+                "-xjf",
+                archive.toAbsolutePath().toString(),
+                "-C",
+                targetDir.toAbsolutePath().toString()
+            );
+            builder.redirectErrorStream(true);
+            Process process = builder.start();
+            Thread drainThread = new Thread(() -> {
+                try {
+                    process.getInputStream().transferTo(OutputStream.nullOutputStream());
+                } catch (IOException ignored) {
+                }
+            }, "MCVoice-SherpaTarOutput");
+            drainThread.setDaemon(true);
+            drainThread.start();
+            if (!process.waitFor(10, TimeUnit.MINUTES)) {
+                process.destroyForcibly();
+                return false;
+            }
+            return process.exitValue() == 0;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private static void extractWithJava(Path archive, Path targetDir, ProgressListener listener) throws IOException {
         Path base = targetDir.toAbsolutePath().normalize();
         try (TarArchiveInputStream tar = new TarArchiveInputStream(
                 new BZip2CompressorInputStream(Files.newInputStream(archive)))) {
             TarArchiveEntry entry;
             while ((entry = (TarArchiveEntry) tar.getNextEntry()) != null) {
                 String name = entry.getName().replace('\\', '/');
+                listener.update("正在解压 · " + name);
                 Path out = base.resolve(name).normalize();
                 if (!out.startsWith(base)) {
                     continue;

@@ -21,6 +21,8 @@ public class ExternalTtsServiceScreen extends Screen {
     private EditBox voiceBox;
     private EditBox modelBox;
     private Button voiceChoiceButton;
+    private Button freeRouteButton;
+    private boolean updatingUrl;
 
     public ExternalTtsServiceScreen(Screen parent) {
         super(Component.translatable("config.mcvoice.external.service.title"));
@@ -62,6 +64,27 @@ public class ExternalTtsServiceScreen extends Screen {
         addRenderableWidget(modeButton);
         y += 20;
 
+        if (freeMode()) {
+            String url = ModConfig.get().serviceUrl;
+            if (url == null || url.isBlank() || url.contains("apizero.cn")) {
+                ModConfig.get().serviceUrl = freeRouteUrls().get(0);
+                if (!freeVoiceOptions().contains(ModConfig.get().serviceVoice)) {
+                    ModConfig.get().serviceVoice = freeVoiceOptions().get(0);
+                }
+                ModConfig.save();
+            }
+            freeRouteButton = Button.builder(
+                    Component.literal(freeRouteLabel()),
+                    button -> cycleFreeRoute())
+                .pos(x, y)
+                .size(buttonWidth, 20)
+                .build();
+            freeRouteButton.setTooltip(Tooltip.create(
+                Component.translatable("config.mcvoice.external.service.route.tooltip")));
+            addRenderableWidget(freeRouteButton);
+            y += 20;
+        }
+
         AbstractSliderButton serviceVolumeSlider = new AbstractSliderButton(
             x, y, buttonWidth, 20,
             Component.literal("服务输出音量：" + Math.round(ModConfig.get().serviceVolume) + "%"),
@@ -90,11 +113,20 @@ public class ExternalTtsServiceScreen extends Screen {
         urlBox.setMaxLength(1000);
         urlBox.setValue(ModConfig.get().serviceUrl);
         urlBox.setResponder(text -> {
-            ModConfig.get().serviceUrl = text;
-            if (freeMode() && !freeVoiceOptions().contains(ModConfig.get().serviceVoice)) {
+            if (updatingUrl) {
+                return;
+            }
+            String value = text.isBlank() ? freeRouteUrls().get(0) : text;
+            ModConfig.get().serviceUrl = value;
+            if (!freeVoiceOptions().contains(ModConfig.get().serviceVoice)) {
                 ModConfig.get().serviceVoice = freeVoiceOptions().get(0);
             }
             ModConfig.save();
+            if (!text.equals(value)) {
+                updatingUrl = true;
+                urlBox.setValue(value);
+                updatingUrl = false;
+            }
         });
         urlBox.setTooltip(Tooltip.create(Component.translatable("config.mcvoice.external.service.url.tooltip")));
         addRenderableWidget(urlBox);
@@ -237,7 +269,22 @@ public class ExternalTtsServiceScreen extends Screen {
         if (voiceChoiceButton != null) {
             voiceChoiceButton.setMessage(Component.literal(freeVoiceLabel(currentFreeVoice())));
         }
+        if (freeRouteButton != null) {
+            freeRouteButton.setMessage(Component.literal(freeRouteLabel()));
+        }
         super.tick();
+    }
+
+    private void cycleFreeRoute() {
+        List<String> routes = freeRouteUrls();
+        String current = ModConfig.get().serviceUrl == null ? "" : ModConfig.get().serviceUrl;
+        int index = routes.indexOf(current);
+        if (index < 0) {
+            index = 0;
+        }
+        ModConfig.get().serviceUrl = routes.get((index + 1) % routes.size());
+        ModConfig.save();
+        rebuildWidgets();
     }
 
     private void cycleFreeVoice() {
@@ -249,23 +296,39 @@ public class ExternalTtsServiceScreen extends Screen {
     }
 
     private List<String> freeVoiceOptions() {
-        String url = ModConfig.get().serviceUrl == null ? "" : ModConfig.get().serviceUrl.toLowerCase();
-        if (url.contains("ttsapi") || url.contains("ttsbox") || url.contains("edge.text-to-speech.cn")) {
-            return List.of(
-                "zh-CN-XiaoyiNeural",
-                "zh-CN-XiaoxiaoNeural",
-                "zh-CN-YunxiNeural",
-                "zh-CN-YunjianNeural",
-                "zh-CN-XiaoshuangNeural"
-            );
-        }
         return List.of(
             "female_zhubo",
             "male_zhubo",
             "male_rap",
             "female_sichuan",
-            "male_db"
+            "male_db",
+            "zh-CN-XiaoyiNeural",
+            "zh-CN-XiaoxiaoNeural",
+            "zh-CN-YunxiNeural",
+            "zh-CN-YunjianNeural",
+            "zh-CN-XiaoshuangNeural"
         );
+    }
+
+    private List<String> freeRouteUrls() {
+        return List.of(
+            "https://ttsapi.cn",
+            "https://ttsbox.cn",
+            "https://edge.text-to-speech.cn"
+        );
+    }
+
+    private String freeRouteLabel() {
+        String url = ModConfig.get().serviceUrl == null ? "" : ModConfig.get().serviceUrl;
+        if (url.isBlank() || url.contains("apizero.cn")) {
+            return "免费线路：ttsapi.cn";
+        }
+        for (String route : freeRouteUrls()) {
+            if (url.toLowerCase().contains(route.replace("https://", "").replace(".cn", ""))) {
+                return "免费线路：" + route.replace("https://", "");
+            }
+        }
+        return "免费线路：" + url;
     }
 
     private String currentFreeVoice() {

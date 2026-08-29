@@ -91,7 +91,7 @@ edge-tts --voice zh-CN-XiaoxiaoNeural --text "{text}" --write-media "{file}"
 - URL 模板：适合自建 GET 接口。
 - OpenAI 兼容：适合 OpenAI 或兼容服务的 `/audio/speech` 接口。
 
-免费 TTS 模式也支持把服务地址改为 `https://ttsapi.cn`、`https://ttsbox.cn` 或 `https://edge.text-to-speech.cn`。如果配置的是 `apizero` 接口且连续请求被限流，模组会自动切换备用免费服务。
+免费 TTS 模式提供线路按钮，可在 `https://ttsapi.cn`、`https://ttsbox.cn`、`https://edge.text-to-speech.cn` 之间切换；地址框留空时会自动填回默认线路。如果配置的是 `apizero` 接口且连续请求被限流，模组也会自动切换备用免费服务。
 免费模式下会隐藏 API Key 和模型输入框，音色改为点击切换。
 
 外部 TTS 服务设置里新增“服务输出音量”滑条，范围 0%-200%，三种请求方式都会生效。
@@ -159,6 +159,12 @@ https://api.openai.com/v1/audio/speech
 - 下载页分为 Piper 和 Sherpa 两组，Sherpa 模型自动解压到 `mcvoice/models/sherpa`。
 - 按 Windows x64 打包，macOS/Linux 显示不支持提示。
 
+### 0.1.8
+
+- 修复免费 TTS 连续请求被限流后不再发声的问题。
+- 默认免费服务改为 `https://ttsapi.cn`，遇到 `apizero` 限流会自动切换备用服务。
+- Sherpa 模型解压优先使用 Windows 自带解压器，失败时回退到内置解压，并显示解压进度。
+
 ## 构建
 
 本机构建已使用离线依赖：
@@ -169,4 +175,4 @@ $env:JAVA_HOME = "C:\Program Files\Java\jdk-26.0.2"
 E:\gradle-9.6.1\bin\gradle.bat build --offline
 ```
 
-产物位于 `build/libs/mcvoice-0.1.7+26.2.jar`。
+产物位于 `build/libs/mcvoice-0.1.8+26.2.jar`。
