@@ -87,12 +87,12 @@ edge-tts --voice zh-CN-XiaoxiaoNeural --text "{text}" --write-media "{file}"
 
 在“高级设置”里打开“外部TTS服务设置”，有三种请求方式：
 
-- 免费 TTS（内置）：默认使用 `https://ttsapi.cn`，无需 API Key。
+- 免费 TTS（内置）：默认使用微软 Edge 直连，无需 API Key，可直接生成中文语音。
 - URL 模板：适合自建 GET 接口。
 - OpenAI 兼容：适合 OpenAI 或兼容服务的 `/audio/speech` 接口。
 
-免费 TTS 模式提供线路按钮，可在 `https://ttsapi.cn`、`https://ttsbox.cn`、`https://edge.text-to-speech.cn` 之间切换；地址框留空时会自动填回默认线路。如果配置的是 `apizero` 接口且连续请求被限流，模组也会自动切换备用免费服务。
-免费模式下会隐藏 API Key 和模型输入框，音色改为点击切换。
+免费 TTS 模式提供线路按钮，可在微软 Edge 直连和 apizero 备用之间切换。微软 Edge 直连最稳定，支持标准中文音色；apizero 备用支持四川话等音色。如果备用线路限流或不可用，模组会自动回退到微软 Edge 直连，避免出现“显示生成成功但没有声音”的情况。
+免费模式下会隐藏服务地址、API Key 和模型输入框，音色改为点击切换。
 
 外部 TTS 服务设置里新增“服务输出音量”滑条，范围 0%-200%，三种请求方式都会生效。
 
@@ -161,8 +161,8 @@ https://api.openai.com/v1/audio/speech
 
 ### 0.1.8
 
-- 修复免费 TTS 连续请求被限流后不再发声的问题。
-- 默认免费服务改为 `https://ttsapi.cn`，遇到 `apizero` 限流会自动切换备用服务。
+- 修复免费 TTS 无声音的问题：默认改为微软 Edge 直连，失效镜像会返回首页 HTML 时自动回退到直连线路。
+- apizero 备用线路保留四川话等音色，限流或不可用时也会自动回退到微软 Edge 直连。
 - Sherpa 模型解压优先使用 Windows 自带解压器，失败时回退到内置解压，并显示解压进度。
 
 ## 构建

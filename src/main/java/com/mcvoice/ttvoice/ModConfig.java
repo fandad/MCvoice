@@ -22,9 +22,9 @@ public final class ModConfig {
         public boolean externalServiceTts = false;
         public float serviceVolume = 100.0f;
         public String serviceMode = "edge";
-        public String serviceUrl = "https://ttsapi.cn";
+        public String serviceUrl = "edge-direct";
         public String serviceApiKey = "";
-        public String serviceVoice = "female_zhubo";
+        public String serviceVoice = "zh-CN-XiaoyiNeural";
         public String serviceModel = "";
     }
 

@@ -15,13 +15,13 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Base64;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public final class ExternalServiceEngine implements TtsEngine {
     private static final Gson GSON = new Gson();
+    private static final String EDGE_DIRECT = "edge-direct";
     private static final String DEFAULT_FREE_BASE = "https://ttsapi.cn";
     private static final String DEFAULT_FREE_VOICE = "zh-CN-XiaoyiNeural";
     private static final String DEFAULT_APIZERO_VOICE = "female_zhubo";
@@ -75,19 +75,23 @@ public final class ExternalServiceEngine implements TtsEngine {
     }
 
     private short[] synthesizeFree(HttpClient client, String text) throws Exception {
+        if (isEdgeDirect()) {
+            return new EdgeTtsEngine(edgeVoice(), serviceVolume).synthesize(text);
+        }
         if (isApizero()) {
             try {
                 return synthesizeApizero(client, text);
             } catch (Exception e) {
-                if (!isRateLimit(e)) {
-                    throw e;
-                }
-                return synthesizeFreeFallback(client, text);
+                return new EdgeTtsEngine(edgeVoice(), serviceVolume).synthesize(text);
             }
         }
         String base = normalizeBase(url);
-        boolean edgeHost = base.toLowerCase().contains("edge.text-to-speech.cn");
-        return synthesizeGenericFree(client, text, base, edgeHost, emptyTo(voice, DEFAULT_FREE_VOICE));
+        try {
+            boolean edgeHost = base.toLowerCase().contains("edge.text-to-speech.cn");
+            return synthesizeGenericFree(client, text, base, edgeHost, emptyTo(voice, DEFAULT_FREE_VOICE));
+        } catch (Exception e) {
+            return new EdgeTtsEngine(edgeVoice(), serviceVolume).synthesize(text);
+        }
     }
 
     private short[] synthesizeGenericFree(HttpClient client, String text, String base, boolean edgeHost, String voice)
@@ -112,29 +116,24 @@ public final class ExternalServiceEngine implements TtsEngine {
             .build();
         HttpResponse<byte[]> audioResponse = client.send(audioRequest, HttpResponse.BodyHandlers.ofByteArray());
         checkResponse(audioResponse);
-        return AudioUtil.readAudio(audioResponse.body());
-    }
-
-    private short[] synthesizeFreeFallback(HttpClient client, String text) throws Exception {
-        List<String> fallbackHosts = List.of(
-            "https://ttsapi.cn",
-            "https://ttsbox.cn",
-            "https://edge.text-to-speech.cn"
-        );
-        Exception lastError = null;
-        for (String base : fallbackHosts) {
-            boolean edgeHost = base.contains("edge.text-to-speech.cn");
-            try {
-                return synthesizeGenericFree(client, text, base, edgeHost, fallbackVoice());
-            } catch (Exception e) {
-                lastError = e;
-            }
+        byte[] body = audioResponse.body();
+        if (isHtml(body)) {
+            throw new IOException("免费TTS服务返回的是页面而不是音频");
         }
-        throw new IOException("所有免费TTS服务都失败：" + lastError.getMessage(), lastError);
+        return AudioUtil.readAudio(body);
     }
 
     private boolean isApizero() {
         return url != null && url.toLowerCase().contains("apizero.cn");
+    }
+
+    private boolean isEdgeDirect() {
+        String value = url == null ? "" : url.toLowerCase();
+        return value.isBlank()
+            || value.contains(EDGE_DIRECT)
+            || value.contains("ttsapi.cn")
+            || value.contains("ttsbox.cn")
+            || value.contains("edge.text-to-speech.cn");
     }
 
     private short[] synthesizeApizero(HttpClient client, String text) throws Exception {
@@ -143,12 +142,13 @@ public final class ExternalServiceEngine implements TtsEngine {
         payload.put("text", text);
         payload.put("voice_type", emptyTo(voice, DEFAULT_APIZERO_VOICE));
 
-        HttpRequest request = HttpRequest.newBuilder(URI.create(endpoint))
+        HttpRequest.Builder requestBuilder = HttpRequest.newBuilder(URI.create(endpoint))
             .timeout(Duration.ofSeconds(30))
             .header("Content-Type", "application/json")
             .header("Accept", "application/json")
-            .POST(HttpRequest.BodyPublishers.ofString(GSON.toJson(payload), StandardCharsets.UTF_8))
-            .build();
+            .POST(HttpRequest.BodyPublishers.ofString(GSON.toJson(payload), StandardCharsets.UTF_8));
+        applyAuth(requestBuilder);
+        HttpRequest request = requestBuilder.build();
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
         if (response.statusCode() < 200 || response.statusCode() >= 300) {
             throw new IllegalStateException("免费TTS服务返回 " + response.statusCode());
@@ -203,19 +203,33 @@ public final class ExternalServiceEngine implements TtsEngine {
         return GSON.toJson(payload);
     }
 
-    private String fallbackVoice() {
+    private String edgeVoice() {
         String configured = emptyTo(voice, DEFAULT_FREE_VOICE);
         if (configured.startsWith("zh-CN-")) {
             return configured;
         }
-        return DEFAULT_FREE_VOICE;
+        switch (configured) {
+            case "female_sichuan":
+                return "zh-CN-XiaoxiaoNeural";
+            case "male_zhubo":
+                return "zh-CN-YunxiNeural";
+            case "male_rap":
+                return "zh-CN-YunjianNeural";
+            case "female_zhubo":
+                return "zh-CN-XiaoyiNeural";
+            case "male_db":
+                return "zh-CN-YunjianNeural";
+            default:
+                return DEFAULT_FREE_VOICE;
+        }
     }
 
-    private static boolean isRateLimit(Exception e) {
-        return e != null
-            && e instanceof IllegalStateException
-            && e.getMessage() != null
-            && e.getMessage().contains("429");
+    private static boolean isHtml(byte[] body) {
+        if (body == null || body.length == 0) {
+            return false;
+        }
+        String prefix = new String(body, 0, Math.min(body.length, 256), StandardCharsets.UTF_8);
+        return prefix.contains("<!DOCTYPE html>") || prefix.contains("<html");
     }
 
     private static String sendFreeRequest(HttpClient client, String base, String payload, String token, boolean edgeHost)

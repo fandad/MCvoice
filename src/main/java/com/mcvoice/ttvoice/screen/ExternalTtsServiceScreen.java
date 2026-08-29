@@ -15,6 +15,9 @@ import net.minecraft.network.chat.Component;
 import java.util.List;
 
 public class ExternalTtsServiceScreen extends Screen {
+    private static final String EDGE_DIRECT = "edge-direct";
+    private static final String APIZERO_URL = "https://v1.apizero.cn/api/tts";
+
     private final Screen parent;
     private EditBox urlBox;
     private EditBox keyBox;
@@ -66,13 +69,17 @@ public class ExternalTtsServiceScreen extends Screen {
 
         if (freeMode()) {
             String url = ModConfig.get().serviceUrl;
-            if (url == null || url.isBlank() || url.contains("apizero.cn")) {
-                ModConfig.get().serviceUrl = freeRouteUrls().get(0);
-                if (!freeVoiceOptions().contains(ModConfig.get().serviceVoice)) {
-                    ModConfig.get().serviceVoice = freeVoiceOptions().get(0);
+            if (isApizeroUrl(url)) {
+                if (!apizeroVoiceOptions().contains(ModConfig.get().serviceVoice)) {
+                    ModConfig.get().serviceVoice = apizeroVoiceOptions().get(0);
                 }
-                ModConfig.save();
+            } else {
+                ModConfig.get().serviceUrl = EDGE_DIRECT;
+                if (!edgeVoiceOptions().contains(ModConfig.get().serviceVoice)) {
+                    ModConfig.get().serviceVoice = edgeVoiceOptions().get(0);
+                }
             }
+            ModConfig.save();
             freeRouteButton = Button.builder(
                     Component.literal(freeRouteLabel()),
                     button -> cycleFreeRoute())
@@ -105,32 +112,34 @@ public class ExternalTtsServiceScreen extends Screen {
         addRenderableWidget(serviceVolumeSlider);
         y += 24;
 
-        addRenderableWidget(new StringWidget(x, y, buttonWidth, 10,
-            Component.literal(urlLabel()), font));
-        y += 11;
-        urlBox = new EditBox(font, x, y, buttonWidth, 20,
-            Component.literal(urlHint()));
-        urlBox.setMaxLength(1000);
-        urlBox.setValue(ModConfig.get().serviceUrl);
-        urlBox.setResponder(text -> {
-            if (updatingUrl) {
-                return;
-            }
-            String value = text.isBlank() ? freeRouteUrls().get(0) : text;
-            ModConfig.get().serviceUrl = value;
-            if (!freeVoiceOptions().contains(ModConfig.get().serviceVoice)) {
-                ModConfig.get().serviceVoice = freeVoiceOptions().get(0);
-            }
-            ModConfig.save();
-            if (!text.equals(value)) {
-                updatingUrl = true;
-                urlBox.setValue(value);
-                updatingUrl = false;
-            }
-        });
-        urlBox.setTooltip(Tooltip.create(Component.translatable("config.mcvoice.external.service.url.tooltip")));
-        addRenderableWidget(urlBox);
-        y += 30;
+        if (!freeMode()) {
+            addRenderableWidget(new StringWidget(x, y, buttonWidth, 10,
+                Component.literal(urlLabel()), font));
+            y += 11;
+            urlBox = new EditBox(font, x, y, buttonWidth, 20,
+                Component.literal(urlHint()));
+            urlBox.setMaxLength(1000);
+            urlBox.setValue(ModConfig.get().serviceUrl);
+            urlBox.setResponder(text -> {
+                if (updatingUrl) {
+                    return;
+                }
+                String value = text.isBlank() ? freeRouteUrls().get(0) : text;
+                ModConfig.get().serviceUrl = value;
+                if (!freeVoiceOptions().contains(ModConfig.get().serviceVoice)) {
+                    ModConfig.get().serviceVoice = freeVoiceOptions().get(0);
+                }
+                ModConfig.save();
+                if (!text.equals(value)) {
+                    updatingUrl = true;
+                    urlBox.setValue(value);
+                    updatingUrl = false;
+                }
+            });
+            urlBox.setTooltip(Tooltip.create(Component.translatable("config.mcvoice.external.service.url.tooltip")));
+            addRenderableWidget(urlBox);
+            y += 30;
+        }
 
         if (freeMode()) {
             addRenderableWidget(new StringWidget(x, y, buttonWidth, 10,
@@ -216,8 +225,11 @@ public class ExternalTtsServiceScreen extends Screen {
         } else {
             ModConfig.get().serviceMode = "url";
         }
-        if (freeMode() && !freeVoiceOptions().contains(ModConfig.get().serviceVoice)) {
-            ModConfig.get().serviceVoice = freeVoiceOptions().get(0);
+        if (freeMode()) {
+            ModConfig.get().serviceUrl = EDGE_DIRECT;
+            if (!edgeVoiceOptions().contains(ModConfig.get().serviceVoice)) {
+                ModConfig.get().serviceVoice = edgeVoiceOptions().get(0);
+            }
         }
         ModConfig.save();
         rebuildWidgets();
@@ -278,11 +290,14 @@ public class ExternalTtsServiceScreen extends Screen {
     private void cycleFreeRoute() {
         List<String> routes = freeRouteUrls();
         String current = ModConfig.get().serviceUrl == null ? "" : ModConfig.get().serviceUrl;
-        int index = routes.indexOf(current);
+        int index = routes.indexOf(normalizeRoute(current));
         if (index < 0) {
             index = 0;
         }
         ModConfig.get().serviceUrl = routes.get((index + 1) % routes.size());
+        if (!freeVoiceOptions().contains(ModConfig.get().serviceVoice)) {
+            ModConfig.get().serviceVoice = freeVoiceOptions().get(0);
+        }
         ModConfig.save();
         rebuildWidgets();
     }
@@ -296,45 +311,91 @@ public class ExternalTtsServiceScreen extends Screen {
     }
 
     private List<String> freeVoiceOptions() {
+        if (isEdgeDirect()) {
+            return edgeVoiceOptions();
+        }
+        return apizeroVoiceOptions();
+    }
+
+    private List<String> edgeVoiceOptions() {
         return List.of(
+            "zh-CN-XiaoyiNeural",
+            "zh-CN-XiaoxiaoNeural",
+            "zh-CN-YunxiNeural",
+            "zh-CN-YunjianNeural",
+            "zh-CN-XiaoshuangNeural",
+            "zh-CN-YunyangNeural"
+        );
+    }
+
+    private List<String> apizeroVoiceOptions() {
+        return List.of(
+            "female_sichuan",
             "female_zhubo",
             "male_zhubo",
             "male_rap",
-            "female_sichuan",
             "male_db",
             "zh-CN-XiaoyiNeural",
             "zh-CN-XiaoxiaoNeural",
             "zh-CN-YunxiNeural",
             "zh-CN-YunjianNeural",
-            "zh-CN-XiaoshuangNeural"
+            "zh-CN-XiaoshuangNeural",
+            "zh-CN-YunyangNeural"
         );
     }
 
     private List<String> freeRouteUrls() {
         return List.of(
-            "https://ttsapi.cn",
-            "https://ttsbox.cn",
-            "https://edge.text-to-speech.cn"
+            EDGE_DIRECT,
+            APIZERO_URL
         );
     }
 
     private String freeRouteLabel() {
         String url = ModConfig.get().serviceUrl == null ? "" : ModConfig.get().serviceUrl;
-        if (url.isBlank() || url.contains("apizero.cn")) {
-            return "免费线路：ttsapi.cn";
+        String route = normalizeRoute(url);
+        if (EDGE_DIRECT.equals(route)) {
+            return "免费线路：微软 Edge 直连";
         }
-        for (String route : freeRouteUrls()) {
-            if (url.toLowerCase().contains(route.replace("https://", "").replace(".cn", ""))) {
-                return "免费线路：" + route.replace("https://", "");
-            }
+        if (APIZERO_URL.equals(route)) {
+            return "免费线路：apizero（四川话等）";
         }
-        return "免费线路：" + url;
+        return "免费线路：" + route;
     }
 
     private String currentFreeVoice() {
         List<String> options = freeVoiceOptions();
         String configured = ModConfig.get().serviceVoice;
         return options.contains(configured) ? configured : options.get(0);
+    }
+
+    private boolean isEdgeDirect() {
+        return isEdgeDirectUrl(ModConfig.get().serviceUrl);
+    }
+
+    private boolean isEdgeDirectUrl(String url) {
+        if (url == null || url.isBlank()) {
+            return true;
+        }
+        String value = url.toLowerCase();
+        return value.contains(EDGE_DIRECT)
+            || value.contains("ttsapi.cn")
+            || value.contains("ttsbox.cn")
+            || value.contains("edge.text-to-speech.cn");
+    }
+
+    private boolean isApizeroUrl(String url) {
+        return url != null && url.toLowerCase().contains("apizero.cn");
+    }
+
+    private String normalizeRoute(String url) {
+        if (isEdgeDirectUrl(url)) {
+            return EDGE_DIRECT;
+        }
+        if (isApizeroUrl(url)) {
+            return APIZERO_URL;
+        }
+        return url == null ? "" : url;
     }
 
     private String freeVoiceLabel(String voice) {
@@ -359,6 +420,8 @@ public class ExternalTtsServiceScreen extends Screen {
                 return "音色：云健";
             case "zh-CN-XiaoshuangNeural":
                 return "音色：晓双";
+            case "zh-CN-YunyangNeural":
+                return "音色：云扬";
             default:
                 return "音色：" + voice;
         }
