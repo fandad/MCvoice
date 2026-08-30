@@ -1,0 +1,98 @@
+plugins {
+    id "net.fabricmc.fabric-loom-remap" version "1.17.20"
+}
+
+def minecraftVersion = "1.21.8"
+def javaVersion = 21
+def releaseVersion = 21
+
+version = "${rootProject.mod_version}+${minecraftVersion}"
+group = rootProject.maven_group
+
+base {
+    archivesName = rootProject.archives_base_name
+}
+
+repositories {
+    mavenCentral()
+    maven {
+        url = uri("https://api.modrinth.com/maven")
+    }
+    maven {
+        url = uri("https://jitpack.io")
+    }
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${minecraftVersion}"
+    mappings loom.officialMojangMappings()
+    modImplementation "net.fabricmc:fabric-loader:${rootProject.loader_version}"
+    modCompileOnly files(
+        rootProject.file("libs/pv/plasmovoice-fabric-1.21.6-2.1.16.jar")
+    )
+    modImplementation fileTree(rootProject.file("libs/1.21.8/fabric-api")) {
+        include("*.jar")
+    }
+    modImplementation "maven.modrinth:9eGKb6K1:CR71OhWv"
+    modImplementation "maven.modrinth:mOgUt4GM:ku5NivOP"
+    implementation files(
+        rootProject.file("libs/piper-jni-1.4.2.jar"),
+        rootProject.file("libs/jlayer-1.0.1.4.jar")
+    )
+    implementation("net.java.dev.jna:jna-platform:5.18.1")
+    implementation("com.github.k2-fsa.sherpa-onnx:sherpa-onnx-jvm:v1.13.5")
+    implementation("com.github.k2-fsa.sherpa-onnx:sherpa-onnx-native-lib-win-x64:v1.13.5")
+    implementation("org.apache.commons:commons-compress:1.27.1")
+    implementation("org.tukaani:xz:1.10")
+    include("net.java.dev.jna:jna-platform:5.18.1")
+    include("net.java.dev.jna:jna:5.18.1")
+    include("com.github.k2-fsa.sherpa-onnx:sherpa-onnx-jvm:v1.13.5")
+    include("com.github.k2-fsa.sherpa-onnx:sherpa-onnx-native-lib-win-x64:v1.13.5")
+    include("org.apache.commons:commons-compress:1.27.1")
+    include("org.tukaani:xz:1.10")
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(javaVersion)
+    }
+    withSourcesJar()
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.release = releaseVersion
+    options.encoding = "UTF-8"
+}
+
+sourceSets {
+    main {
+        java {
+            srcDir rootProject.file("common/src/main/java")
+        }
+        resources {
+            srcDir rootProject.file("common/src/main/resources")
+        }
+    }
+}
+
+processResources {
+    filteringCharset = "UTF-8"
+    inputs.property("version", project.version)
+    filesMatching("fabric.mod.json") {
+        expand("version": project.version)
+    }
+}
+
+tasks.named("jar") {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    from(zipTree(rootProject.file("libs/piper-jni-1.4.2.jar"))) {
+        exclude("META-INF/MANIFEST.MF")
+        exclude("META-INF/*.SF")
+        exclude("META-INF/*.RSA")
+        exclude("META-INF/*.DSA")
+    }
+    from(zipTree(rootProject.file("libs/jlayer-1.0.1.4.jar"))) {
+        exclude("META-INF/MANIFEST.MF")
+        exclude("META-INF/maven/**")
+    }
+}

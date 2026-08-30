@@ -9,3 +9,7 @@ pluginManagement {
 }
 
 rootProject.name = "MCvoice"
+
+include "mc26"
+include "mc12111"
+include "mc1218"

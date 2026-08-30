@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "id": "mcvoice",
+  "version": "${version}",
+  "name": "MC语音",
+  "description": "在聊天框输入文字，本地生成中文语音；通过 Simple Voice Chat 或 Plasmo Voice 让服务器里的其他玩家听到。",
+  "authors": [
+    "MCvoice"
+  ],
+  "license": "GPL-3.0-only",
+  "icon": "assets/mcvoice/textures/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "com.mcvoice.ttvoice.plasmo.McvoicePvCommon"
+    ],
+    "client": [
+      "com.mcvoice.ttvoice.TtVoiceClient"
+    ],
+    "voicechat": [
+      "com.mcvoice.ttvoice.VcPlugin"
+    ],
+    "modmenu": [
+      "com.mcvoice.ttvoice.ModMenuEntry"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.16.13",
+    "minecraft": "1.21.8",
+    "java": ">=21",
+    "fabric-api": "*",
+    "voicechat": ">=1.21.8-2.6.22"
+  },
+  "suggests": {
+    "modmenu": ">=15.0.2",
+    "plasmovoice": "*",
+    "pv-addon-groups": "*"
+  }
+}

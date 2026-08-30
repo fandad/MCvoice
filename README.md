@@ -1,6 +1,6 @@
 # MC语音
 
-MC语音是面向 Minecraft 26.2 Fabric 的客户端文字转语音模组。输入文字后，本地生成中文语音，并通过 Simple Voice Chat 发给服务器里其他安装了 SVC 的玩家。
+MC语音是面向 Minecraft Fabric 的文字转语音模组，当前提供 26.x、1.21.11、1.21.8 三个 jar。输入文字后，本地生成中文语音，并通过 Simple Voice Chat 或 Plasmo Voice 发给服务器里其他安装了对应语音模组的玩家。
 
 本模组基于 [FlooferLand/ttvoice-mod](https://github.com/FlooferLand/ttvoice-mod) 开发，遵循 GPLv3 许可证。
 
@@ -10,14 +10,15 @@ MC语音是面向 Minecraft 26.2 Fabric 的客户端文字转语音模组。输�
 - 中文配置界面、说话界面、聊天栏指令
 - 自动朗读开关：聊天框发送的文字可直接说出来
 - 音量调节：支持 0%-200%
-- 传播距离：支持 1-128 格，实际生效受 SVC 服务端和群组规则限制
+- 传播距离：支持 1-128 格，实际生效受 SVC/PV 服务端和群组规则限制
 - 通过 Simple Voice Chat 播放音频
+- 支持 Plasmo Voice 服务端桥接，PV 玩家也能听到 TTS
 - 支持 Piper 离线中文模型，可一键下载或手动放入多个声线
 - 支持 Sherpa-onnx 离线中文模型，提供更多本地声线
 - 支持 Windows SAPI 系统声线，不需要额外下载模型
 - 支持外部 TTS 命令，可接入 edge-tts、自建脚本或任意能输出 WAV 的工具
 - 支持外部 TTS 服务，可选用内置免费 TTS、URL 模板或 OpenAI 兼容接口
-- 默认按键为 `~`，可打开说话界面
+- 默认按键：`~` 打开说话界面，`X` 打开配置菜单
 
 ## 指令
 
@@ -37,6 +38,14 @@ MC语音是面向 Minecraft 26.2 Fabric 的客户端文字转语音模组。输�
 /mcvoice voice set <声线ID>
 /mcvoice config
 ```
+
+## Plasmo Voice 适配
+
+要让其他 PV 玩家听到 MCvoice 的 TTS，服务器必须同时安装 MCvoice、Plasmo Voice，并在需要群组时安装 `pv-addon-groups`。客户端只负责本地生成 48kHz/16bit 单声道 PCM，并把音频通过自定义数据包发给服务器；服务器再通过 PV API 广播给其他 PV 玩家。
+
+- 如果玩家在 PV 群组中，使用群组广播源，群组规则优先，忽略距离滑块。
+- 如果没有群组，使用 PV 近聊源，并沿用 MCvoice 的距离滑块（1-128 格）。
+- Simple Voice Chat 接入保留，SVC 和 PV 可以同时存在。
 
 ## 添加 Piper 中文声线
 
@@ -159,6 +168,17 @@ https://api.openai.com/v1/audio/speech
 - 下载页分为 Piper 和 Sherpa 两组，Sherpa 模型自动解压到 `mcvoice/models/sherpa`。
 - 按 Windows x64 打包，macOS/Linux 显示不支持提示。
 
+### 0.1.9
+
+- 模型下载页改为每个模型独立显示状态：未下载、下载中、已下载、下载失败。
+- 已下载判断复用模型校验逻辑，避免 `.part` 或空目录被误认为已经下载完成。
+- 下载失败后自动清理临时文件、无效模型文件或残缺目录，并恢复为可点击重试。
+- 修正 `fabric.mod.json` 许可证字段为 `GPL-3.0-only`。
+- 新增 Plasmo Voice 服务端桥接：客户端把 TTS PCM 发给服务器，PV 服务器再广播给其他 PV 玩家。
+- PV 群组规则优先；未开群组时沿用现有距离滑条作为近聊距离。
+- 工程拆分为 3 个目标 jar，26.x 覆盖 26.1、26.1.1、26.1.2 和 26.2；1.21.11 和 1.21.8 各自独立。
+- 新增配置菜单快捷键，默认 `X`；说话界面仍为 `~`。
+
 ### 0.1.8
 
 - 修复免费 TTS 无声音的问题：默认改为微软 Edge 直连，失效镜像会返回首页 HTML 时自动回退到直连线路。
@@ -172,7 +192,27 @@ https://api.openai.com/v1/audio/speech
 ```powershell
 $env:GRADLE_USER_HOME = "E:\GradleCache"
 $env:JAVA_HOME = "C:\Program Files\Java\jdk-26.0.2"
-E:\gradle-9.6.1\bin\gradle.bat build --offline
+E:\gradle-9.6.1\bin\gradle.bat build --offline --no-daemon --no-watch-fs --no-parallel
 ```
 
-产物位于 `build/libs/mcvoice-0.1.8+26.2.jar`。
+当前 0.1.9 实际产物为：
+
+```text
+mc26/build/libs/mcvoice-0.1.9+26.x.jar
+mc12111/build/libs/mcvoice-0.1.9+1.21.11.jar
+mc1218/build/libs/mcvoice-0.1.9+1.21.8.jar
+```
+
+`mcvoice-0.1.9+26.x.jar` 覆盖 26.1、26.1.1、26.1.2 和 26.2；`1.21.11` 和 `1.21.8` 各自独立。
+
+## 实例目录
+
+部署脚本会把三个同版本 jar 一起复制到：
+
+```text
+E:\Bakabot历史\MCvoice\0.1.9实例
+```
+
+这个目录用于集中存放和备份同一版本的三个目标 jar。实际启动某个 Minecraft 版本时，只把对应游戏版本的 jar 放进该版本的 `mods` 文件夹，不要把三个 jar 同时塞进同一个游戏实例。
+
+`deploy.ps1` 不再更新 `1.21.11` 游戏文件夹，但仍会生成并备份 `1.21.11` jar。
