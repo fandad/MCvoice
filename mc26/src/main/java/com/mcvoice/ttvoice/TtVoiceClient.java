@@ -36,11 +36,14 @@ public class TtVoiceClient implements ClientModInitializer {
     }
 
     private static void registerKeybind() {
+        KeyMapping.Category generalCategory = KeyMapping.Category.register(
+            Identifier.tryBuild(MOD_ID, "general")
+        );
         speakKey = new KeyMapping(
             "key." + MOD_ID + ".speak",
             InputConstants.Type.KEYSYM,
             GLFW.GLFW_KEY_GRAVE_ACCENT,
-            KeyMapping.Category.register(Identifier.tryBuild(MOD_ID, "general"))
+            generalCategory
         );
         KeyMappingHelper.registerKeyMapping(speakKey);
 
@@ -48,7 +51,7 @@ public class TtVoiceClient implements ClientModInitializer {
             "key." + MOD_ID + ".config",
             InputConstants.Type.KEYSYM,
             GLFW.GLFW_KEY_X,
-            KeyMapping.Category.register(Identifier.tryBuild(MOD_ID, "general"))
+            generalCategory
         );
         KeyMappingHelper.registerKeyMapping(configKey);
 
