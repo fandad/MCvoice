@@ -2,7 +2,7 @@ package com.mcvoice.ttvoice.tts;
 
 import com.mcvoice.ttvoice.McVoiceConstants;
 import com.mcvoice.ttvoice.ModConfig;
-import com.mcvoice.ttvoice.VcPlugin;
+import com.mcvoice.ttvoice.VoiceChatBridge;
 import com.mcvoice.ttvoice.plasmo.PlasmoVoiceBridge;
 
 import javax.sound.sampled.AudioFormat;
@@ -156,7 +156,7 @@ public final class TtsManager {
             ModConfig.get().volume
         );
         int frameSize = AudioUtil.FRAME_SIZE;
-        boolean svcConnected = VcPlugin.isConnected();
+        boolean svcConnected = VoiceChatBridge.isConnected();
         boolean pvAvailable = PlasmoVoiceBridge.isAvailable();
         boolean sendToSvc = ModConfig.get().routeThroughVoiceChat && svcConnected;
         boolean sendToPv = ModConfig.get().routeThroughVoiceChat && pvAvailable;
@@ -184,7 +184,7 @@ public final class TtsManager {
                 }
                 if (playLocally) {
                     if (svcConnected) {
-                        VcPlugin.playLocal(frame);
+                        VoiceChatBridge.playLocal(frame);
                     } else {
                         localLine.write(AudioUtil.toBytes(frame), 0, frame.length * Short.BYTES);
                     }

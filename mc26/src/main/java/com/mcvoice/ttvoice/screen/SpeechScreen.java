@@ -32,16 +32,23 @@ public class SpeechScreen extends Screen {
     protected void init() {
         int centerX = width / 2;
         int boxWidth = Math.min(360, width - 40);
+        boolean compact = boxWidth < 3 * 60 + 20;
+        int textBoxY = height - 48 - (compact ? 24 : 0);
 
-        textBox = new EditBox(font, centerX - boxWidth / 2, height - 48, boxWidth, 20,
+        textBox = new EditBox(font, centerX - boxWidth / 2, textBoxY, boxWidth, 20,
             Component.translatable("speech.mcvoice.placeholder"));
         textBox.setMaxLength(500);
         textBox.setValue("");
         addRenderableWidget(textBox);
         setInitialFocus(textBox);
 
-        int buttonY = height - 24;
-        int buttonWidth = Math.max(70, boxWidth / 4);
+        int buttonY = textBoxY + 24;
+        int buttonWidth;
+        if (compact) {
+            buttonWidth = Math.max(70, (boxWidth - 5) / 2);
+        } else {
+            buttonWidth = Math.max(60, (boxWidth - 10) / 3);
+        }
         speakButton = Button.builder(Component.translatable("speech.mcvoice.speak"),
                 button -> speak())
             .pos(centerX - boxWidth / 2, buttonY)
@@ -55,19 +62,21 @@ public class SpeechScreen extends Screen {
         addRenderableWidget(speakButton);
         addRenderableWidget(stopButton);
 
+        int backY = compact ? buttonY + 24 : buttonY;
+        int backX = compact ? centerX - 30 : centerX + boxWidth / 2 - buttonWidth;
+        addRenderableWidget(Button.builder(Component.literal("返回"),
+                button -> ScreenUtil.setScreen(parent))
+            .pos(backX, backY)
+            .size(compact ? 60 : buttonWidth, 20)
+            .build());
+
         historyWidget = new MultiLineTextWidget(Component.literal(buildHistory()), font);
         historyWidget.setX(centerX - boxWidth / 2);
         historyWidget.setY(20);
         historyWidget.setMaxWidth(boxWidth);
-        historyWidget.setMaxRows((height - 110) / (font.lineHeight + 2));
+        historyWidget.setMaxRows(Math.max(1, (textBoxY - 30) / (font.lineHeight + 2)));
         historyWidget.setCentered(false);
         addRenderableWidget(historyWidget);
-
-        addRenderableWidget(Button.builder(Component.literal("返回"),
-                button -> ScreenUtil.setScreen(parent))
-            .pos(centerX + boxWidth / 2 - 60, buttonY)
-            .size(60, 20)
-            .build());
     }
 
     private void speak() {

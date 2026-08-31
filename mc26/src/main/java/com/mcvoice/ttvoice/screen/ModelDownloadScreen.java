@@ -39,6 +39,8 @@ public class ModelDownloadScreen extends Screen {
     private final Map<String, Button> modelButtons = new HashMap<>();
     private MultiLineTextWidget statusWidget;
     private volatile String status = "";
+    private int scrollY;
+    private int maxScrollY;
 
     public ModelDownloadScreen(Screen parent) {
         super(Component.translatable("download.mcvoice.title"));
@@ -82,9 +84,9 @@ public class ModelDownloadScreen extends Screen {
         int columnWidth = (buttonWidth - 8) / 2;
         int leftX = x;
         int rightX = x + columnWidth + 8;
-        int buttonY = 42;
+        int buttonY = 42 - scrollY;
 
-        addRenderableWidget(new StringWidget(leftX, 31, columnWidth, 10,
+        addRenderableWidget(new StringWidget(leftX, 31 - scrollY, columnWidth, 10,
             Component.translatable("download.mcvoice.section.piper"), font));
         modelButtons.put("zh_CN-huayan-medium", addButton(leftX, buttonY, columnWidth,
             "download.mcvoice.medium", "zh_CN-huayan-medium", false));
@@ -93,7 +95,7 @@ public class ModelDownloadScreen extends Screen {
         modelButtons.put("zh_CN-chaowen-medium", addButton(leftX, buttonY + 40, columnWidth,
             "download.mcvoice.chaowen", "zh_CN-chaowen-medium", false));
 
-        addRenderableWidget(new StringWidget(rightX, 31, columnWidth, 10,
+        addRenderableWidget(new StringWidget(rightX, 31 - scrollY, columnWidth, 10,
             Component.translatable("download.mcvoice.section.sherpa"), font));
         modelButtons.put("vits-melo-tts-zh_en", addButton(rightX, buttonY, columnWidth,
             "download.mcvoice.sherpa.melo", "vits-melo-tts-zh_en", true));
@@ -109,17 +111,26 @@ public class ModelDownloadScreen extends Screen {
         addRenderableWidget(Button.builder(
                 Component.translatable("download.mcvoice.openFolder"),
                 button -> VoiceRegistry.openMcVoiceFolder())
-            .pos(centerX - buttonWidth / 2, 150)
+            .pos(centerX - buttonWidth / 2, 150 - scrollY)
             .size(buttonWidth, 18)
             .build());
 
         statusWidget = new MultiLineTextWidget(Component.literal(status), font);
         statusWidget.setX(x);
-        statusWidget.setY(174);
+        statusWidget.setY(174 - scrollY);
         statusWidget.setMaxWidth(buttonWidth);
         statusWidget.setMaxRows(3);
         statusWidget.setCentered(false);
         addRenderableWidget(statusWidget);
+
+        int availableHeight = Math.max(100, height - 50);
+        maxScrollY = Math.max(0, 200 - availableHeight);
+        int oldScroll = scrollY;
+        scrollY = Math.max(0, Math.min(scrollY, maxScrollY));
+        if (scrollY != oldScroll) {
+            rebuildWidgets();
+            return;
+        }
 
         addRenderableWidget(Button.builder(Component.translatable("speech.mcvoice.back"),
                 button -> ScreenUtil.setScreen(parent))
@@ -143,6 +154,16 @@ public class ModelDownloadScreen extends Screen {
             statusWidget.setMessage(Component.literal(status));
         }
         super.tick();
+    }
+
+    @Override
+    public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
+        int oldScroll = scrollY;
+        scrollY = Math.max(0, Math.min(maxScrollY, scrollY - (int) Math.round(verticalAmount * 18)));
+        if (scrollY != oldScroll) {
+            rebuildWidgets();
+        }
+        return true;
     }
 
     private Button addButton(int x, int y, int width, String labelKey, String modelId, boolean sherpa) {

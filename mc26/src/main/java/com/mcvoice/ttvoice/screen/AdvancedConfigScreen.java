@@ -15,6 +15,8 @@ import net.minecraft.network.chat.Component;
 public class AdvancedConfigScreen extends Screen {
     private final Screen parent;
     private EditBox commandBox;
+    private int scrollY;
+    private int maxScrollY;
 
     public AdvancedConfigScreen(Screen parent) {
         super(Component.translatable("config.mcvoice.advanced"));
@@ -26,7 +28,7 @@ public class AdvancedConfigScreen extends Screen {
         int centerX = width / 2;
         int buttonWidth = Math.min(360, width - 40);
         int x = centerX - buttonWidth / 2;
-        int y = 38;
+        int y = 38 - scrollY;
 
         addRenderableWidget(new StringWidget(centerX - buttonWidth / 2, 14, buttonWidth, 20,
             Component.translatable("config.mcvoice.advanced"), font));
@@ -116,17 +118,36 @@ public class AdvancedConfigScreen extends Screen {
         MultiLineTextWidget explanation = new MultiLineTextWidget(
             Component.translatable("config.mcvoice.external.command.explain"), font);
         explanation.setX(x);
-        explanation.setY(Math.max(y + 24, height - 86));
+        explanation.setY(y + 24);
         explanation.setMaxWidth(buttonWidth);
-        explanation.setMaxRows(3);
+        explanation.setMaxRows(4);
         explanation.setCentered(false);
         addRenderableWidget(explanation);
+
+        int availableHeight = Math.max(80, height - 66);
+        maxScrollY = Math.max(0, (y + 110) - availableHeight);
+        int oldScroll = scrollY;
+        scrollY = Math.max(0, Math.min(scrollY, maxScrollY));
+        if (scrollY != oldScroll) {
+            rebuildWidgets();
+            return;
+        }
 
         addRenderableWidget(Button.builder(Component.literal("返回"),
                 button -> ScreenUtil.setScreen(parent))
             .pos(centerX - 50, height - 32)
             .size(100, 20)
             .build());
+    }
+
+    @Override
+    public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
+        int oldScroll = scrollY;
+        scrollY = Math.max(0, Math.min(maxScrollY, scrollY - (int) Math.round(verticalAmount * 18)));
+        if (scrollY != oldScroll) {
+            rebuildWidgets();
+        }
+        return true;
     }
 
     @Override

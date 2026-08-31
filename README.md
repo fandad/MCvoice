@@ -2,7 +2,7 @@
 
 MC语音是面向 Minecraft Fabric 的文字转语音模组，当前提供 26.x、1.21.11、1.21.8 三个 jar。输入文字后，本地生成中文语音，并通过 Simple Voice Chat 或 Plasmo Voice 发给服务器里其他安装了对应语音模组的玩家。
 
-本模组基于 [FlooferLand/ttvoice-mod](https://github.com/FlooferLand/ttvoice-mod) 开发，遵循 GPLv3 许可证。
+本模组基于 FlooferLand 的 Text to Voice 修改，原项目为 [FlooferLand/ttvoice-mod](https://github.com/FlooferLand/ttvoice-mod)，版权归 FlooferLand 所有。本模组遵循 GPLv3 许可证。
 
 ## 当前功能
 
@@ -19,6 +19,8 @@ MC语音是面向 Minecraft Fabric 的文字转语音模组，当前提供 26.x�
 - 支持外部 TTS 命令，可接入 edge-tts、自建脚本或任意能输出 WAV 的工具
 - 支持外部 TTS 服务，可选用内置免费 TTS、URL 模板或 OpenAI 兼容接口
 - 默认按键：`~` 打开说话界面，`X` 打开配置菜单
+- Simple Voice Chat 现在是可选前置，不装 SVC/PV 时仍可本地播放语音
+- 配置页显示 SVC 和 PV 连接状态，未连接时会提示模组仅本地生效
 
 ## 指令
 
@@ -121,6 +123,13 @@ https://api.openai.com/v1/audio/speech
 
 ## 版本历史
 
+### 0.2.0
+
+- Simple Voice Chat 改为可选前置，不装 SVC 时模组也能启动并本地播放；装了 SVC 仍可发给其他 SVC 玩家。
+- 配置页新增 SimpleVoiceChat 和 PlasmoVoice 连接状态字段，未连接时显示红色并提示“模组仅可以在本地生效，他人无法听到”。
+- PV 已安装但服务器未装 MCvoice 时显示黄色“已安装,未连接”，并提供服务器需要安装 MCvoice 的提示。
+- 界面随游戏窗口缩放自适应，窗口较小时支持滚动，修复按钮重叠问题。
+
 ### 0.1.0
 
 - 从原 ttvoice 重写为独立的 MCvoice 模组，适配 Minecraft 26.2 / Fabric。
@@ -196,22 +205,22 @@ $env:JAVA_HOME = "C:\Program Files\Java\jdk-26.0.2"
 E:\gradle-9.6.1\bin\gradle.bat build --offline --no-daemon --no-watch-fs --no-parallel
 ```
 
-当前 0.1.9 实际产物为：
+当前 0.2.0 实际产物为：
 
 ```text
-mc26/build/libs/mcvoice-0.1.9+26.x.jar
-mc12111/build/libs/mcvoice-0.1.9+1.21.11.jar
-mc1218/build/libs/mcvoice-0.1.9+1.21.8.jar
+mc26/build/libs/mcvoice-0.2.0+26.x.jar
+mc12111/build/libs/mcvoice-0.2.0+1.21.11.jar
+mc1218/build/libs/mcvoice-0.2.0+1.21.8.jar
 ```
 
-`mcvoice-0.1.9+26.x.jar` 覆盖 26.1、26.1.1、26.1.2 和 26.2；`1.21.11` 和 `1.21.8` 各自独立。
+`mcvoice-0.2.0+26.x.jar` 覆盖 26.1、26.1.1、26.1.2 和 26.2；`1.21.11` 和 `1.21.8` 各自独立。
 
 ## 实例目录
 
 部署脚本会把三个同版本 jar 一起复制到：
 
 ```text
-E:\Bakabot历史\MCvoice\0.1.9实例
+E:\Bakabot历史\MCvoice\0.2.0实例
 ```
 
 这个目录用于集中存放和备份同一版本的三个目标 jar。实际启动某个 Minecraft 版本时，只把对应游戏版本的 jar 放进该版本的 `mods` 文件夹，不要把三个 jar 同时塞进同一个游戏实例。

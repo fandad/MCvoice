@@ -25,6 +25,14 @@ public final class PlasmoVoiceBridge {
         return pvLoaded && PvNetwork.canSend();
     }
 
+    public static boolean isPvInstalled() {
+        return FabricLoader.getInstance().isModLoaded("plasmovoice");
+    }
+
+    public static boolean isPvServerConnected() {
+        return pvLoaded && PvNetwork.canSend();
+    }
+
     public static void sendFrame(short[] frame, float distance) {
         if (isAvailable()) {
             PvNetwork.sendFrame(AudioUtil.toBytes(frame), distance);

@@ -26,6 +26,8 @@ public class ExternalTtsServiceScreen extends Screen {
     private Button voiceChoiceButton;
     private Button freeRouteButton;
     private boolean updatingUrl;
+    private int scrollY;
+    private int maxScrollY;
 
     public ExternalTtsServiceScreen(Screen parent) {
         super(Component.translatable("config.mcvoice.external.service.title"));
@@ -38,7 +40,7 @@ public class ExternalTtsServiceScreen extends Screen {
         int centerX = width / 2;
         int buttonWidth = Math.min(360, width - 40);
         int x = centerX - buttonWidth / 2;
-        int y = 36;
+        int y = 36 - scrollY;
 
         addRenderableWidget(new StringWidget(centerX - buttonWidth / 2, 14, buttonWidth, 20,
             Component.translatable("config.mcvoice.external.service.title"), font));
@@ -200,11 +202,30 @@ public class ExternalTtsServiceScreen extends Screen {
             addRenderableWidget(modelBox);
         }
 
+        int availableHeight = Math.max(80, height - 66);
+        maxScrollY = Math.max(0, (y + 90) - availableHeight);
+        int oldScroll = scrollY;
+        scrollY = Math.max(0, Math.min(scrollY, maxScrollY));
+        if (scrollY != oldScroll) {
+            rebuildWidgets();
+            return;
+        }
+
         addRenderableWidget(Button.builder(Component.literal("返回"),
                 button -> ScreenUtil.setScreen(parent))
             .pos(centerX - 50, height - 32)
             .size(100, 20)
             .build());
+    }
+
+    @Override
+    public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
+        int oldScroll = scrollY;
+        scrollY = Math.max(0, Math.min(maxScrollY, scrollY - (int) Math.round(verticalAmount * 18)));
+        if (scrollY != oldScroll) {
+            rebuildWidgets();
+        }
+        return true;
     }
 
     private String modeLabel() {
