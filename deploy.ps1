@@ -105,7 +105,7 @@ function Copy-PvFiles([string[]]$modsDirs, [string]$pvJarName) {
     }
 }
 
-$historyDir = "E:\Bakabot" + [char]0x5386 + [char]0x53F2 + "\MCvoice"
+$historyDir = "E:\" + [char]0x9879 + [char]0x76EE + [char]0x5386 + [char]0x53F2 + "\MCvoice"
 if (-not (Test-Path -LiteralPath $historyDir)) {
     New-Item -ItemType Directory -Path $historyDir -Force | Out-Null
 }
@@ -134,6 +134,13 @@ $artifacts = @(
         Pattern = "1.21.8"
         Category = "1.21.8"
         PvJar = "plasmovoice-fabric-1.21.6-2.1.16.jar"
+    },
+    @{
+        Source = Join-Path $projectRoot "mc1211\build\libs\mcvoice-$modVersion+1.21.1.jar"
+        Pattern = "1.21.1"
+        Category = "1.21.1"
+        PvJar = "plasmovoice-fabric-1.21.1-2.1.16.jar"
+        DeployMods = $false
     }
 )
 

@@ -28,10 +28,10 @@
     "fabricloader": ">=0.16.13",
     "minecraft": "1.21.8",
     "java": ">=21",
-    "fabric-api": "*"
+    "fabric-api": "*",
+    "modmenu": ">=15.0.2"
   },
   "suggests": {
-    "modmenu": ">=15.0.2",
     "voicechat": ">=1.21.8-2.6.22",
     "plasmovoice": "*",
     "pv-addon-groups": "*"

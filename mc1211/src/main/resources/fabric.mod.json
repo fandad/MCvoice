@@ -25,14 +25,14 @@
     ]
   },
   "depends": {
-    "fabricloader": ">=0.19.3",
-    "minecraft": ">=26.1 <26.3",
-    "java": ">=25",
+    "fabricloader": ">=0.16.13",
+    "minecraft": "1.21.1",
+    "java": ">=21",
     "fabric-api": "*",
-    "modmenu": ">=18.0.0"
+    "modmenu": ">=11.0.4"
   },
   "suggests": {
-    "voicechat": ">=2.6.22+26.1.2",
+    "voicechat": ">=1.21.1-2.6.23",
     "plasmovoice": "*",
     "pv-addon-groups": "*"
   }
