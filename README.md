@@ -63,7 +63,6 @@ MC语音是面向 Minecraft Fabric 的文字转语音模组，当前提供 26.x�
 ```text
 zh_CN-huayan-medium
 zh_CN-huayan-x_low
-zh_CN-chaowen-medium
 ```
 
 ## 添加 Sherpa 中文声线
@@ -74,10 +73,12 @@ zh_CN-chaowen-medium
 
 ```text
 mcvoice/models/sherpa/<模型名>/
-  model.onnx
+  *.onnx
   tokens.txt
   lexicon.txt（可选）
 ```
+
+当前右侧一键下载包含：MeloTTS 中英女声、寒冰、伊拉、繁辰 WNJ、小爱风格、超文、小雅。超文和小雅来自 `phoneme_type=pinyin` 的 Piper 模型，但以 Sherpa-onnx 打包格式提供，不需要单独安装 g2pW 运行时。
 
 ## Windows SAPI 系统声线
 
@@ -123,6 +124,20 @@ https://api.openai.com/v1/audio/speech
 除免费模式外，其他方式都可以填写 API Key、音色名和模型名。服务支持返回 WAV、常见格式和 MP3。
 
 ## 版本历史
+
+### 0.2.2
+
+- 新增超文（男声）和小雅两套中文声线，放入 Sherpa 下载区，无需安装额外 g2pW 运行时。
+- Sherpa 引擎自动加载模型目录中的 `phone.fst`、`date.fst`、`number.fst`，改善数字、日期和电话号朗读。
+- 同步更新 26.x、1.21.11、1.21.8、1.21.1 四个版本，均可用新模型。
+
+### 0.2.1
+
+- Piper 下载状态改为跨下载页共享：切回配置页再进入时，下载中、失败、完成状态不会丢失。
+- Piper 下载过程中会显示正在尝试哪个下载源以及失败原因；下载源增加备用 URL。
+- Piper 下载失败或退出游戏时保留 `.part` 断点，下次点击按钮可从已下载部分继续，不再整包重下。
+- 重新打开下载页时，若检测到未完成模型，对应按钮显示“上次未完成，继续下载”。
+- 修复 Plasmo Voice 开启“让自己也听到”时本地回放卡顿的问题，正常结束会播完剩余音频，手动停止才立即清空。
 
 ### 0.2.0
 
@@ -208,23 +223,23 @@ $env:JAVA_HOME = "C:\Program Files\Java\jdk-26.0.2"
 E:\gradle-9.6.1\bin\gradle.bat build --offline --no-daemon --no-watch-fs --no-parallel
 ```
 
-当前 0.2.0 实际产物为：
+当前 0.2.2 实际产物为：
 
 ```text
-mc26/build/libs/mcvoice-0.2.0+26.x.jar
-mc12111/build/libs/mcvoice-0.2.0+1.21.11.jar
-mc1218/build/libs/mcvoice-0.2.0+1.21.8.jar
-mc1211/build/libs/mcvoice-0.2.0+1.21.1.jar
+mc26/build/libs/mcvoice-0.2.2+26.x.jar
+mc12111/build/libs/mcvoice-0.2.2+1.21.11.jar
+mc1218/build/libs/mcvoice-0.2.2+1.21.8.jar
+mc1211/build/libs/mcvoice-0.2.2+1.21.1.jar
 ```
 
-`mcvoice-0.2.0+26.x.jar` 覆盖 26.1、26.1.1、26.1.2 和 26.2；`1.21.11`、`1.21.8`、`1.21.1` 各自独立。
+`mcvoice-0.2.2+26.x.jar` 覆盖 26.1、26.1.1、26.1.2 和 26.2；`1.21.11`、`1.21.8`、`1.21.1` 各自独立。
 
 ## 实例目录
 
 部署脚本会把当前版本所有目标 jar 一起复制到：
 
 ```text
-E:\项目历史\MCvoice\0.2.0实例
+E:\项目历史\MCvoice\0.2.2实例
 ```
 
 这个目录用于集中存放和备份同一版本的目标 jar。实际启动某个 Minecraft 版本时，只把对应游戏版本的 jar 放进该版本的 `mods` 文件夹，不要把多个不同游戏版本的 jar 同时塞进同一个游戏实例。

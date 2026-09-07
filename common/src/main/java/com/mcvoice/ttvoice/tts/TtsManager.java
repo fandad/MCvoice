@@ -162,6 +162,7 @@ public final class TtsManager {
         boolean sendToPv = ModConfig.get().routeThroughVoiceChat && pvAvailable;
         boolean sendAny = sendToSvc || sendToPv;
         boolean playLocally = !sendAny || (ModConfig.get().hearSelf && (svcConnected || pvAvailable));
+        boolean interrupted = false;
         SPEAKING.set(true);
         try {
             if (playLocally) {
@@ -171,6 +172,13 @@ public final class TtsManager {
                 int end = Math.min(audio.length, offset + frameSize);
                 short[] frame = new short[frameSize];
                 System.arraycopy(audio, offset, frame, 0, end - offset);
+                if (playLocally) {
+                    if (svcConnected) {
+                        VoiceChatBridge.playLocal(frame);
+                    } else {
+                        localLine.write(AudioUtil.toBytes(frame), 0, frame.length * Short.BYTES);
+                    }
+                }
                 if (sendToPv) {
                     PlasmoVoiceBridge.sendFrame(frame, ModConfig.get().distance);
                 }
@@ -182,22 +190,18 @@ public final class TtsManager {
                         SVC_QUEUE.add(frame);
                     }
                 }
-                if (playLocally) {
-                    if (svcConnected) {
-                        VoiceChatBridge.playLocal(frame);
-                    } else {
-                        localLine.write(AudioUtil.toBytes(frame), 0, frame.length * Short.BYTES);
-                    }
+                if (!(playLocally && !svcConnected)) {
+                    Thread.sleep(20);
                 }
-                Thread.sleep(20);
             }
         } catch (InterruptedException e) {
+            interrupted = true;
             Thread.currentThread().interrupt();
         } catch (Exception e) {
             McVoiceConstants.LOGGER.warn("Local audio playback failed", e);
         } finally {
             PlasmoVoiceBridge.sendEnd(ModConfig.get().distance);
-            closeLocalLine();
+            closeLocalLine(interrupted);
             SPEAKING.set(false);
         }
     }
@@ -219,14 +223,19 @@ public final class TtsManager {
         if (localLine == null) {
             AudioFormat format = new AudioFormat(AudioUtil.OUTPUT_SAMPLE_RATE, 16, 1, true, false);
             localLine = AudioSystem.getSourceDataLine(format);
-            localLine.open(format, AudioUtil.FRAME_SIZE * 2);
+            int bufferSize = AudioUtil.FRAME_SIZE * Short.BYTES * 12;
+            localLine.open(format, bufferSize);
             localLine.start();
         }
     }
 
-    private static void closeLocalLine() {
+    private static void closeLocalLine(boolean interrupted) {
         if (localLine != null) {
-            localLine.flush();
+            if (interrupted) {
+                localLine.flush();
+            } else {
+                localLine.drain();
+            }
             localLine.stop();
             localLine.close();
             localLine = null;

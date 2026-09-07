@@ -1,6 +1,8 @@
 package com.mcvoice.ttvoice.tts;
 
 import com.mcvoice.ttvoice.McVoiceConstants;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import net.fabricmc.loader.api.FabricLoader;
 
 import java.io.IOException;
@@ -14,15 +16,16 @@ import java.util.Map;
 public final class VoiceRegistry {
     private static final Map<String, String> PIPER_NAMES = Map.of(
         "zh_CN-huayan-medium", "中文 · 花颜（女声）",
-        "zh_CN-huayan-x_low", "中文 · 花颜（低配）",
-        "zh_CN-chaowen-medium", "中文 · 超文（男声）"
+        "zh_CN-huayan-x_low", "中文 · 花颜（低配）"
     );
     private static final Map<String, String> SHERPA_NAMES = Map.of(
         "vits-melo-tts-zh_en", "中文 · MeloTTS 中英女声",
         "vits-zh-hf-theresa", "中文 · 寒冰（多音色女声）",
         "vits-zh-hf-eula", "中文 · 伊拉（多音色女声）",
         "vits-zh-hf-fanchen-wnj", "中文 · 繁辰 WNJ（男声）",
-        "sherpa-onnx-vits-zh-ll", "中文 · 小爱风格（多音色）"
+        "sherpa-onnx-vits-zh-ll", "中文 · 小爱风格（多音色）",
+        "vits-piper-zh_CN-chaowen-medium", "中文 · 超文（男声）",
+        "vits-piper-zh_CN-xiao_ya-medium", "中文 · 小雅"
     );
 
     private VoiceRegistry() {
@@ -54,6 +57,9 @@ public final class VoiceRegistry {
                         String id = path.getFileName().toString().replaceFirst("\\.onnx$", "");
                         Path config = path.resolveSibling(id + ".onnx.json");
                         if (!isUsableModel(path, config)) {
+                            return;
+                        }
+                        if (!isPiperRuntimeCompatible(config)) {
                             return;
                         }
                         String display = PIPER_NAMES.getOrDefault(id, "中文 · " + id);
@@ -112,11 +118,26 @@ public final class VoiceRegistry {
     public static boolean isModelDownloaded(String modelId, boolean sherpa) {
         if (sherpa) {
             Path dir = getSherpaModelDir().resolve(modelId);
-            return isUsableSherpaModel(dir.resolve("model.onnx"), dir.resolve("tokens.txt"));
+            return findSherpaModelFile(dir) != null;
         }
         Path modelFile = getModelDir().resolve(modelId + ".onnx");
         Path configFile = getModelDir().resolve(modelId + ".onnx.json");
         return isUsableModel(modelFile, configFile);
+    }
+
+    public static Path findSherpaModelFile(Path modelDir) {
+        if (!Files.isDirectory(modelDir)) {
+            return null;
+        }
+        try (var stream = Files.list(modelDir)) {
+            return stream.filter(Files::isRegularFile)
+                .filter(path -> path.getFileName().toString().endsWith(".onnx"))
+                .filter(path -> isUsableSherpaModel(path, path.getParent().resolve("tokens.txt")))
+                .findFirst()
+                .orElse(null);
+        } catch (IOException e) {
+            return null;
+        }
     }
 
     public static boolean isUsableModel(Path modelFile, Path configFile) {
@@ -136,6 +157,18 @@ public final class VoiceRegistry {
             String content = Files.readString(path);
             return content != null && !content.isBlank() && content.stripLeading().startsWith("{");
         } catch (IOException e) {
+            return false;
+        }
+    }
+
+    private static boolean isPiperRuntimeCompatible(Path configFile) {
+        try {
+            JsonObject root = JsonParser.parseString(Files.readString(configFile)).getAsJsonObject();
+            String phonemeType = root.has("phoneme_type")
+                ? root.get("phoneme_type").getAsString()
+                : "";
+            return !"pinyin".equals(phonemeType);
+        } catch (Exception e) {
             return false;
         }
     }

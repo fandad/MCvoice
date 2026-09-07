@@ -1,9 +1,7 @@
 package com.mcvoice.ttvoice.screen;
 
-import com.mcvoice.ttvoice.tts.PiperModelDownloader;
-import com.mcvoice.ttvoice.tts.SherpaModelDownloader;
+import com.mcvoice.ttvoice.tts.ModelDownloadManager;
 import com.mcvoice.ttvoice.tts.VoiceRegistry;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.MultiLineTextWidget;
@@ -16,36 +14,39 @@ import java.util.List;
 import java.util.Map;
 
 public class ModelDownloadScreen extends Screen {
-    private enum DownloadState {
-        NOT_DOWNLOADED, DOWNLOADING, DOWNLOADED, FAILED
-    }
-
     private record ModelSpec(String id, boolean sherpa, String labelKey) {
     }
 
     private static final List<ModelSpec> MODEL_SPECS = List.of(
         new ModelSpec("zh_CN-huayan-medium", false, "download.mcvoice.medium"),
         new ModelSpec("zh_CN-huayan-x_low", false, "download.mcvoice.low"),
-        new ModelSpec("zh_CN-chaowen-medium", false, "download.mcvoice.chaowen"),
         new ModelSpec("vits-melo-tts-zh_en", true, "download.mcvoice.sherpa.melo"),
         new ModelSpec("vits-zh-hf-theresa", true, "download.mcvoice.sherpa.theresa"),
         new ModelSpec("vits-zh-hf-eula", true, "download.mcvoice.sherpa.eula"),
         new ModelSpec("vits-zh-hf-fanchen-wnj", true, "download.mcvoice.sherpa.fanchen"),
-        new ModelSpec("sherpa-onnx-vits-zh-ll", true, "download.mcvoice.sherpa.xiaomi")
+        new ModelSpec("sherpa-onnx-vits-zh-ll", true, "download.mcvoice.sherpa.xiaomi"),
+        new ModelSpec("vits-piper-zh_CN-chaowen-medium", true,
+            "download.mcvoice.sherpa.chaowen"),
+        new ModelSpec("vits-piper-zh_CN-xiao_ya-medium", true,
+            "download.mcvoice.sherpa.xiaoya")
     );
 
+    private static final ModelDownloadManager MODEL_DOWNLOADS = ModelDownloadManager.get();
+
     private final Screen parent;
-    private final Map<String, DownloadState> modelStates = new HashMap<>();
     private final Map<String, Button> modelButtons = new HashMap<>();
     private MultiLineTextWidget statusWidget;
-    private volatile String status = "";
+    private volatile String status;
     private int scrollY;
     private int maxScrollY;
 
     public ModelDownloadScreen(Screen parent) {
         super(Component.translatable("download.mcvoice.title"));
         this.parent = parent;
-        this.status = Component.translatable("download.mcvoice.status.ready").getString();
+        this.status = MODEL_DOWNLOADS.statusText();
+        if (this.status == null || this.status.isBlank()) {
+            this.status = Component.translatable("download.mcvoice.status.ready").getString();
+        }
     }
 
     @Override
@@ -55,9 +56,7 @@ public class ModelDownloadScreen extends Screen {
         int x = centerX - buttonWidth / 2;
         modelButtons.clear();
         for (ModelSpec spec : MODEL_SPECS) {
-            modelStates.put(spec.id, VoiceRegistry.isModelDownloaded(spec.id, spec.sherpa)
-                ? DownloadState.DOWNLOADED
-                : DownloadState.NOT_DOWNLOADED);
+            MODEL_DOWNLOADS.prepare(spec.id, spec.sherpa);
         }
 
         addRenderableWidget(new StringWidget(x, 14, buttonWidth, 20,
@@ -92,8 +91,6 @@ public class ModelDownloadScreen extends Screen {
             "download.mcvoice.medium", "zh_CN-huayan-medium", false));
         modelButtons.put("zh_CN-huayan-x_low", addButton(leftX, buttonY + 20, columnWidth,
             "download.mcvoice.low", "zh_CN-huayan-x_low", false));
-        modelButtons.put("zh_CN-chaowen-medium", addButton(leftX, buttonY + 40, columnWidth,
-            "download.mcvoice.chaowen", "zh_CN-chaowen-medium", false));
 
         addRenderableWidget(new StringWidget(rightX, 31 - scrollY, columnWidth, 10,
             Component.translatable("download.mcvoice.section.sherpa"), font));
@@ -107,24 +104,28 @@ public class ModelDownloadScreen extends Screen {
             "download.mcvoice.sherpa.fanchen", "vits-zh-hf-fanchen-wnj", true));
         modelButtons.put("sherpa-onnx-vits-zh-ll", addButton(rightX, buttonY + 80, columnWidth,
             "download.mcvoice.sherpa.xiaomi", "sherpa-onnx-vits-zh-ll", true));
+        modelButtons.put("vits-piper-zh_CN-chaowen-medium", addButton(rightX, buttonY + 100, columnWidth,
+            "download.mcvoice.sherpa.chaowen", "vits-piper-zh_CN-chaowen-medium", true));
+        modelButtons.put("vits-piper-zh_CN-xiao_ya-medium", addButton(rightX, buttonY + 120, columnWidth,
+            "download.mcvoice.sherpa.xiaoya", "vits-piper-zh_CN-xiao_ya-medium", true));
 
         addRenderableWidget(Button.builder(
                 Component.translatable("download.mcvoice.openFolder"),
                 button -> VoiceRegistry.openMcVoiceFolder())
-            .pos(centerX - buttonWidth / 2, 150 - scrollY)
+            .pos(centerX - buttonWidth / 2, 184 - scrollY)
             .size(buttonWidth, 18)
             .build());
 
         statusWidget = new MultiLineTextWidget(Component.literal(status), font);
         statusWidget.setX(x);
-        statusWidget.setY(174 - scrollY);
+        statusWidget.setY(210 - scrollY);
         statusWidget.setMaxWidth(buttonWidth);
         statusWidget.setMaxRows(3);
         statusWidget.setCentered(false);
         addRenderableWidget(statusWidget);
 
         int availableHeight = Math.max(100, height - 50);
-        maxScrollY = Math.max(0, 200 - availableHeight);
+        maxScrollY = Math.max(0, 242 - availableHeight);
         int oldScroll = scrollY;
         scrollY = Math.max(0, Math.min(scrollY, maxScrollY));
         if (scrollY != oldScroll) {
@@ -146,9 +147,15 @@ public class ModelDownloadScreen extends Screen {
             if (button == null) {
                 continue;
             }
-            DownloadState state = modelStates.getOrDefault(spec.id, DownloadState.NOT_DOWNLOADED);
-            button.active = state == DownloadState.NOT_DOWNLOADED || state == DownloadState.FAILED;
+            ModelDownloadManager.State state = MODEL_DOWNLOADS.stateOf(spec.id, spec.sherpa);
+            button.active = state == ModelDownloadManager.State.NOT_DOWNLOADED
+                || state == ModelDownloadManager.State.RESUMABLE
+                || state == ModelDownloadManager.State.FAILED;
             button.setMessage(buttonMessage(spec, state));
+        }
+        String currentStatus = MODEL_DOWNLOADS.statusText();
+        if (currentStatus != null && !currentStatus.isBlank()) {
+            status = currentStatus;
         }
         if (statusWidget != null) {
             statusWidget.setMessage(Component.literal(status));
@@ -176,37 +183,9 @@ public class ModelDownloadScreen extends Screen {
     }
 
     private void startDownload(String modelId, boolean sherpa) {
-        DownloadState state = modelStates.getOrDefault(modelId, DownloadState.NOT_DOWNLOADED);
-        if (state == DownloadState.DOWNLOADING) {
-            return;
-        }
         ModelSpec spec = specById(modelId);
         String label = Component.translatable(spec.labelKey).getString();
-        modelStates.put(modelId, DownloadState.DOWNLOADING);
-        status = "准备下载：" + label;
-        Thread thread = new Thread(() -> {
-            try {
-                if (sherpa) {
-                    SherpaModelDownloader.download(modelId, VoiceRegistry.getSherpaModelDir(),
-                        text -> Minecraft.getInstance().execute(() -> status = text));
-                } else {
-                    PiperModelDownloader.download(modelId, VoiceRegistry.getModelDir(),
-                        text -> Minecraft.getInstance().execute(() -> status = text));
-                }
-                Minecraft.getInstance().execute(() -> {
-                    modelStates.put(modelId, DownloadState.DOWNLOADED);
-                    status = "已完成：" + label + " 已放入 mcvoice/models";
-                });
-            } catch (Exception e) {
-                String error = e.getMessage() == null ? e.toString() : e.getMessage();
-                Minecraft.getInstance().execute(() -> {
-                    modelStates.put(modelId, DownloadState.FAILED);
-                    status = "下载失败：" + error;
-                });
-            }
-        }, "MCVoice-ModelDownload");
-        thread.setDaemon(true);
-        thread.start();
+        MODEL_DOWNLOADS.start(modelId, sherpa, label);
     }
 
     private static ModelSpec specById(String modelId) {
@@ -218,10 +197,11 @@ public class ModelDownloadScreen extends Screen {
         throw new IllegalArgumentException("未知模型: " + modelId);
     }
 
-    private static Component buttonMessage(ModelSpec spec, DownloadState state) {
+    private static Component buttonMessage(ModelSpec spec, ModelDownloadManager.State state) {
         return switch (state) {
             case DOWNLOADING -> Component.translatable("download.mcvoice.downloading");
             case DOWNLOADED -> Component.translatable("download.mcvoice.downloaded");
+            case RESUMABLE -> Component.translatable("download.mcvoice.resumable");
             case FAILED -> Component.translatable("download.mcvoice.failed");
             case NOT_DOWNLOADED -> Component.translatable(spec.labelKey);
         };

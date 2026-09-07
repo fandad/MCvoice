@@ -21,6 +21,8 @@ public final class PiperEngine implements TtsEngine {
         try {
             Path modelFile = prepareFile(Path.of(voiceData.getModelPath()));
             Path configFile = prepareFile(Path.of(voiceData.getConfigPath()));
+            PiperConfigSupport.normalizeVoiceIfNeeded(Path.of(voiceData.getConfigPath()));
+            PiperConfigSupport.normalizeVoiceIfNeeded(configFile);
             String configText = Files.readString(configFile);
             if (configText == null || configText.isBlank() || !configText.stripLeading().startsWith("{")) {
                 throw new IOException("Piper 模型配置无效或为空: " + configFile);

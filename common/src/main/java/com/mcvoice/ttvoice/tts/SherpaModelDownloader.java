@@ -43,7 +43,13 @@ public final class SherpaModelDownloader {
             "vits-zh-hf-fanchen-wnj.tar.bz2"),
         "sherpa-onnx-vits-zh-ll", new ModelDef(
             "小爱风格（多音色）",
-            "sherpa-onnx-vits-zh-ll.tar.bz2")
+            "sherpa-onnx-vits-zh-ll.tar.bz2"),
+        "vits-piper-zh_CN-chaowen-medium", new ModelDef(
+            "超文（男声）",
+            "vits-piper-zh_CN-chaowen-medium.tar.bz2"),
+        "vits-piper-zh_CN-xiao_ya-medium", new ModelDef(
+            "小雅",
+            "vits-piper-zh_CN-xiao_ya-medium.tar.bz2")
     );
 
     private SherpaModelDownloader() {
@@ -69,9 +75,7 @@ public final class SherpaModelDownloader {
             listener.update("正在解压 " + model.displayName() + " ...");
             extract(archive, targetDir, listener);
             Files.deleteIfExists(archive);
-            if (!VoiceRegistry.isUsableSherpaModel(
-                    modelDir.resolve("model.onnx"),
-                    modelDir.resolve("tokens.txt"))) {
+            if (VoiceRegistry.findSherpaModelFile(modelDir) == null) {
                 throw new IOException("模型下载完成但校验未通过");
             }
             listener.update("完成：" + model.displayName() + " 已放入 mcvoice/models/sherpa");
@@ -162,9 +166,7 @@ public final class SherpaModelDownloader {
             Files.deleteIfExists(targetDir.resolve(archive.getFileName() + ".part"));
         } catch (IOException ignored) {
         }
-        if (!VoiceRegistry.isUsableSherpaModel(
-                modelDir.resolve("model.onnx"),
-                modelDir.resolve("tokens.txt"))) {
+        if (VoiceRegistry.findSherpaModelFile(modelDir) == null) {
             deleteRecursively(modelDir);
         }
         deleteIfEmpty(targetDir);
