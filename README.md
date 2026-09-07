@@ -125,6 +125,10 @@ https://api.openai.com/v1/audio/speech
 
 ## 版本历史
 
+### 0.2.3
+
+- 配置页一级菜单的自动朗读选项改名为“自动朗读输入聊天框的文字”，用途更明确。
+
 ### 0.2.2
 
 - 新增超文（男声）和小雅两套中文声线，放入 Sherpa 下载区，无需安装额外 g2pW 运行时。
@@ -223,23 +227,23 @@ $env:JAVA_HOME = "C:\Program Files\Java\jdk-26.0.2"
 E:\gradle-9.6.1\bin\gradle.bat build --offline --no-daemon --no-watch-fs --no-parallel
 ```
 
-当前 0.2.2 实际产物为：
+当前 0.2.3 实际产物为：
 
 ```text
-mc26/build/libs/mcvoice-0.2.2+26.x.jar
-mc12111/build/libs/mcvoice-0.2.2+1.21.11.jar
-mc1218/build/libs/mcvoice-0.2.2+1.21.8.jar
-mc1211/build/libs/mcvoice-0.2.2+1.21.1.jar
+mc26/build/libs/mcvoice-0.2.3+26.x.jar
+mc12111/build/libs/mcvoice-0.2.3+1.21.11.jar
+mc1218/build/libs/mcvoice-0.2.3+1.21.8.jar
+mc1211/build/libs/mcvoice-0.2.3+1.21.1.jar
 ```
 
-`mcvoice-0.2.2+26.x.jar` 覆盖 26.1、26.1.1、26.1.2 和 26.2；`1.21.11`、`1.21.8`、`1.21.1` 各自独立。
+`mcvoice-0.2.3+26.x.jar` 覆盖 26.1、26.1.1、26.1.2 和 26.2；`1.21.11`、`1.21.8`、`1.21.1` 各自独立。
 
 ## 实例目录
 
 部署脚本会把当前版本所有目标 jar 一起复制到：
 
 ```text
-E:\项目历史\MCvoice\0.2.2实例
+E:\项目历史\MCvoice\0.2.3实例
 ```
 
 这个目录用于集中存放和备份同一版本的目标 jar。实际启动某个 Minecraft 版本时，只把对应游戏版本的 jar 放进该版本的 `mods` 文件夹，不要把多个不同游戏版本的 jar 同时塞进同一个游戏实例。

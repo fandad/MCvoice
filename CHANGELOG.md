@@ -1,5 +1,15 @@
 # MCvoice 更新说明 / Changelog
 
+## 0.2.3
+
+English:
+
+- Clarified the auto-read toggle label on the main config screen.
+
+中文：
+
+- 配置页一级菜单的自动朗读选项改名为“自动朗读输入聊天框的文字”。
+
 ## 0.2.2
 
 English:
