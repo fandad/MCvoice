@@ -28,7 +28,7 @@
   "config.mcvoice.general": "通用",
   "config.mcvoice.general.routeThroughVoiceChat": "播放给其他玩家(接入服务器语音)",
   "config.mcvoice.general.hearSelf": "让自己也听到",
-  "config.mcvoice.general.autoSpeak": "自动朗读聊天框文字",
+  "config.mcvoice.general.autoSpeak": "自动朗读输入聊天框的文字",
   "config.mcvoice.advanced": "高级设置",
   "config.mcvoice.advanced.tooltip": "打开音量、传播距离和外部 TTS 设置。",
   "config.mcvoice.volume.tooltip": "调节本地自己和 SVC 播放的音量。",
