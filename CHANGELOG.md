@@ -8,6 +8,7 @@ English:
 - These voices use Piper `phoneme_type=pinyin` models repackaged by Sherpa-onnx, so no separate g2pW runtime is needed.
 - Sherpa models now load matching `phone.fst`, `date.fst`, and `number.fst` automatically for better number, date, and phone-number reading.
 - This release includes jars for 26.x, 1.21.11, 1.21.8, and 1.21.1.
+- 0.2.2 hotfix: Clarified the auto-read toggle label on the main config screen.
 
 中文：
 
@@ -15,6 +16,7 @@ English:
 - 这两套模型采用 Sherpa-onnx 打包的 Piper `phoneme_type=pinyin` 格式，不需要单独安装 g2pW 运行时。
 - Sherpa 引擎会自动加载 `phone.fst`、`date.fst`、`number.fst`，改善数字、日期和电话号朗读。
 - 本版本包含 26.x、1.21.11、1.21.8、1.21.1 四个游戏版本。
+- 0.2.2 热更：配置页自动朗读选项改名为“自动朗读输入聊天框的文字”。
 
 ## 0.2.1
 
