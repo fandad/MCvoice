@@ -1,5 +1,21 @@
 # MCvoice 更新说明 / Changelog
 
+## 0.2.4
+
+English:
+
+- Speech-screen history entries are now clickable to say that text again; the last clicked entry is highlighted with a border, and the full text is shown on hover.
+- Added a linger mode toggle on the speech screen (off by default): unsent text is kept when you leave the screen and restored when you return; after a sentence is sent, the screen closes as usual.
+- Added scroll bars on the right side of the speech screen and all scrollable menu screens; speech history opens at the newest entry at the bottom and keeps up to 50 entries.
+- History storage is unchanged; replaying a history entry does not append a duplicate entry.
+
+中文：
+
+- 说话界面历史记录现在可以点击再次朗读；最近点击的那条会用边框标出，悬停可看完整原文。
+- 说话界面新增滞留模式开关（默认关闭）：退出界面时未发送的文字会保留，下次打开自动恢复；句子发出后界面照常关闭。
+- 说话界面和各可滚动的菜单界面右侧新增滚动条；说话界面历史默认显示到最新一条（最下面），仍按原上限保留 50 条。
+- 历史记录存储方式不变；点击历史重读不会往历史尾部重复添加。
+
 ## 0.2.3
 
 English:

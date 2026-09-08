@@ -15,6 +15,7 @@ public final class ModConfig {
         public String selectedVoice = "piper:zh_CN-huayan-medium";
         public boolean autoSpeak = false;
         public boolean viewHistory = true;
+        public boolean lingerMode = false;
         public float volume = 1.0f;
         public float distance = 16.0f;
         public boolean externalTts = false;

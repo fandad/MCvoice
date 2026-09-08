@@ -154,6 +154,30 @@ public class AdvancedConfigScreen extends Screen {
     public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
         context.fill(0, 0, width, height, 0xAA101018);
         super.render(context, mouseX, mouseY, delta);
+        drawScrollBar(context);
+    }
+
+    private void drawScrollBar(GuiGraphics context) {
+        if (maxScrollY <= 0) {
+            return;
+        }
+        int barX = width - 8;
+        int trackTop = 10;
+        int trackBottom = height - 40;
+        int trackHeight = trackBottom - trackTop;
+        if (trackHeight < 24) {
+            return;
+        }
+        int contentHeight = maxScrollY + trackHeight;
+        float fraction = Math.min(1.0f, (float) scrollY / maxScrollY);
+        int thumbHeight = Math.max(16,
+            (int) (trackHeight * ((float) trackHeight / contentHeight)));
+        if (thumbHeight > trackHeight) {
+            thumbHeight = trackHeight;
+        }
+        int thumbY = trackTop + (int) ((trackHeight - thumbHeight) * fraction);
+        context.fill(barX, trackTop, barX + 3, trackBottom, 0x40000000);
+        context.fill(barX, thumbY, barX + 3, thumbY + thumbHeight, 0xC0FFFFFF);
     }
 
     @Override

@@ -92,6 +92,9 @@
   "speech.mcvoice.placeholder": "输入要说的话…",
   "speech.mcvoice.speak": "说话",
   "speech.mcvoice.stop": "停止",
+  "speech.mcvoice.linger": "滞留模式",
+  "speech.mcvoice.linger.tooltip": "开启后即使退出说话界面，未发送的文字也会保留；句子发送后输入框清空并关闭界面。默认关闭。",
+  "speech.mcvoice.history.replay": "点击可再次朗读这段文字。",
   "speech.mcvoice.history_hide": "隐藏历史",
   "speech.mcvoice.history_show": "显示历史"
 }
