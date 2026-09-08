@@ -10,7 +10,7 @@ import su.plo.voice.api.server.PlasmoVoiceServer;
     id = "mcvoice",
     name = "MCvoice",
     scope = AddonLoaderScope.ANY_SERVER,
-    version = "0.2.1",
+    version = "0.2.3",
     authors = {"MCvoice"},
     dependencies = {}
 )

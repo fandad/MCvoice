@@ -12,9 +12,7 @@ import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 public final class AudioUtil {
     public static final int OUTPUT_SAMPLE_RATE = 48_000;
@@ -109,10 +107,9 @@ public final class AudioUtil {
         Bitstream bitstream = new Bitstream(new BufferedInputStream(new ByteArrayInputStream(mp3Bytes)));
         try {
             Decoder decoder = new Decoder();
-            List<short[]> frames = new ArrayList<>();
+            short[] mono = new short[1 << 16];
+            int monoLength = 0;
             int sampleRate = 0;
-            int channels = 1;
-            int totalSamples = 0;
 
             while (true) {
                 Header header = bitstream.readFrame();
@@ -123,34 +120,35 @@ public final class AudioUtil {
                 int frameLength = output.getBufferLength();
                 if (frameLength > 0) {
                     int frameChannels = Math.max(1, output.getChannelCount());
-                    frames.add(Arrays.copyOf(output.getBuffer(), frameLength));
-                    channels = frameChannels;
+                    int samples = frameLength / frameChannels;
+                    if (monoLength + samples > mono.length) {
+                        int newSize = mono.length * 2;
+                        while (newSize < monoLength + samples) {
+                            newSize *= 2;
+                        }
+                        mono = Arrays.copyOf(mono, newSize);
+                    }
+                    short[] frame = output.getBuffer();
+                    if (frameChannels == 1) {
+                        System.arraycopy(frame, 0, mono, monoLength, samples);
+                    } else {
+                        for (int i = 0; i < samples; i++) {
+                            int left = frame[i * frameChannels];
+                            int right = frame[i * frameChannels + 1];
+                            mono[monoLength + i] = (short) ((left + right) / 2);
+                        }
+                    }
+                    monoLength += samples;
                     sampleRate = output.getSampleFrequency();
-                    totalSamples += frameLength / frameChannels;
                 }
                 bitstream.closeFrame();
             }
 
-            if (frames.isEmpty() || totalSamples == 0 || sampleRate <= 0) {
+            if (monoLength == 0 || sampleRate <= 0) {
                 throw new IllegalStateException("MP3 中没有可解码的音频");
             }
-
-            short[] mono = new short[totalSamples];
-            int out = 0;
-            for (short[] frame : frames) {
-                int samples = frame.length / channels;
-                if (channels == 1) {
-                    System.arraycopy(frame, 0, mono, out, samples);
-                } else {
-                    for (int i = 0; i < samples; i++) {
-                        int left = frame[i * channels];
-                        int right = frame[i * channels + 1];
-                        mono[out + i] = (short) ((left + right) / 2);
-                    }
-                }
-                out += samples;
-            }
-            return resample(mono, sampleRate);
+            short[] result = mono.length == monoLength ? mono : Arrays.copyOf(mono, monoLength);
+            return resample(result, sampleRate);
         } finally {
             bitstream.close();
         }

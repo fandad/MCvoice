@@ -66,4 +66,14 @@ public final class ModConfig {
             McVoiceConstants.LOGGER.error("无法保存配置", e);
         }
     }
+
+    public static void setAutoSpeak(boolean enabled) {
+        data.autoSpeak = enabled;
+        save();
+    }
+
+    public static boolean toggleAutoSpeak() {
+        setAutoSpeak(!data.autoSpeak);
+        return data.autoSpeak;
+    }
 }

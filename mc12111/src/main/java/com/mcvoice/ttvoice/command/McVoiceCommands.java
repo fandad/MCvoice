@@ -96,12 +96,11 @@ public final class McVoiceCommands {
     }
 
     private static int autoToggle(CommandContext<FabricClientCommandSource> ctx) {
-        return autoSet(ctx, !ModConfig.get().autoSpeak);
+        return autoSet(ctx, ModConfig.toggleAutoSpeak());
     }
 
     private static int autoSet(CommandContext<FabricClientCommandSource> ctx, boolean enabled) {
-        ModConfig.get().autoSpeak = enabled;
-        ModConfig.save();
+        ModConfig.setAutoSpeak(enabled);
         ctx.getSource().sendFeedback(Component.translatable(
             enabled ? "mcvoice.command.auto.on" : "mcvoice.command.auto.off"
         ));

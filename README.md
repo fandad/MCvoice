@@ -8,7 +8,7 @@ MC语音是面向 Minecraft Fabric 的文字转语音模组，当前提供 26.x�
 
 - Windows x64 打包，macOS/Linux 会显示不支持提示
 - 中文配置界面、说话界面、聊天栏指令
-- 自动朗读开关：聊天框发送的文字可直接说出来
+- 自动朗读开关：聊天框发送的文字可直接说出来，可用 B 键或 `/mcvoice auto` 快速切换
 - 音量调节：支持 0%-200%
 - 传播距离：支持 1-128 格，实际生效受 SVC/PV 服务端和群组规则限制
 - 通过 Simple Voice Chat 播放音频
@@ -18,7 +18,7 @@ MC语音是面向 Minecraft Fabric 的文字转语音模组，当前提供 26.x�
 - 支持 Windows SAPI 系统声线，不需要额外下载模型
 - 支持外部 TTS 命令，可接入 edge-tts、自建脚本或任意能输出 WAV 的工具
 - 支持外部 TTS 服务，可选用内置免费 TTS、URL 模板或 OpenAI 兼容接口
-- 默认按键：`~` 打开说话界面，`X` 打开配置菜单
+- 默认按键：`~` 打开说话界面，`X` 打开配置菜单，`B` 切换自动朗读
 - Fabric API 和 Mod Menu 必装，Simple Voice Chat 和 Plasmo Voice 均为可选
 - Simple Voice Chat 现在是可选前置，不装 SVC/PV 时仍可本地播放语音
 - 配置页显示 SVC 和 PV 连接状态，未连接时会提示模组仅本地生效
@@ -104,8 +104,10 @@ edge-tts --voice zh-CN-XiaoxiaoNeural --text "{text}" --write-media "{file}"
 - URL 模板：适合自建 GET 接口。
 - OpenAI 兼容：适合 OpenAI 或兼容服务的 `/audio/speech` 接口。
 
-免费 TTS 模式提供线路按钮，可在微软 Edge 直连和 apizero 备用之间切换。微软 Edge 直连最稳定，支持标准中文音色；apizero 备用支持四川话等音色。如果备用线路限流或不可用，模组会自动回退到微软 Edge 直连，避免出现“显示生成成功但没有声音”的情况。
+免费 TTS 模式提供线路按钮，可在微软 Edge 直连和 apizero 备用之间切换。微软 Edge 直连支持标准中文音色；apizero 备用支持四川话等音色。如果备用线路限流或不可用，模组会自动回退到微软 Edge 直连，避免出现“显示生成成功但没有声音”的情况。
 免费模式下会隐藏服务地址、API Key 和模型输入框，音色改为点击切换。
+
+微软 Edge 直连失败时会自动重试；连续失败时会自动回退到微软区域 HTTP 线路，降低单条线路抽风的影响。apizero 限流或不可用时仍会自动回退到 Edge 直连。若线路返回空音频，会明确提示而不是静默失败。
 
 外部 TTS 服务设置里新增“服务输出音量”滑条，范围 0%-200%，三种请求方式都会生效。
 
@@ -123,7 +125,18 @@ https://api.openai.com/v1/audio/speech
 
 除免费模式外，其他方式都可以填写 API Key、音色名和模型名。服务支持返回 WAV、常见格式和 MP3。
 
+## 内存与性能提示
+
+说话时模组需要在内存中缓存当前语音；使用较大本地模型或在服务器里频繁说话时，如果遇到内存不足，建议在启动器中调高游戏分配内存，并可安装匹配游戏版本的内存优化类模组（例如 FerriteCore 等）。这只是建议提示，不是模组前置依赖。
+
 ## 版本历史
+
+### 0.2.3
+
+- 新增 B 键自动朗读快捷键：与配置页开关、`/mcvoice auto` 状态同步，反馈文字一致。
+- Edge 直连失败自动重试，连续失败自动回退区域 HTTP 线路；空音频明确报错。
+- 说话时内存优化：请求队列有上限、超长文本分段合成、MP3 解码减少整段重复副本。
+- 26.x、1.21.11、1.21.8、1.21.1 四个版本同步更新。
 
 ### 0.2.2
 
@@ -224,23 +237,23 @@ $env:JAVA_HOME = "C:\Program Files\Java\jdk-26.0.2"
 E:\gradle-9.6.1\bin\gradle.bat build --offline --no-daemon --no-watch-fs --no-parallel
 ```
 
-当前 0.2.2 实际产物为：
+当前 0.2.3 实际产物为：
 
 ```text
-mc26/build/libs/mcvoice-0.2.2+26.x.jar
-mc12111/build/libs/mcvoice-0.2.2+1.21.11.jar
-mc1218/build/libs/mcvoice-0.2.2+1.21.8.jar
-mc1211/build/libs/mcvoice-0.2.2+1.21.1.jar
+mc26/build/libs/mcvoice-0.2.3+26.x.jar
+mc12111/build/libs/mcvoice-0.2.3+1.21.11.jar
+mc1218/build/libs/mcvoice-0.2.3+1.21.8.jar
+mc1211/build/libs/mcvoice-0.2.3+1.21.1.jar
 ```
 
-`mcvoice-0.2.2+26.x.jar` 覆盖 26.1、26.1.1、26.1.2 和 26.2；`1.21.11`、`1.21.8`、`1.21.1` 各自独立。
+`mcvoice-0.2.3+26.x.jar` 覆盖 26.1、26.1.1、26.1.2 和 26.2；`1.21.11`、`1.21.8`、`1.21.1` 各自独立。
 
 ## 实例目录
 
 部署脚本会把当前版本所有目标 jar 一起复制到：
 
 ```text
-E:\项目历史\MCvoice\0.2.2实例
+E:\项目历史\MCvoice\0.2.3实例
 ```
 
 这个目录用于集中存放和备份同一版本的目标 jar。实际启动某个 Minecraft 版本时，只把对应游戏版本的 jar 放进该版本的 `mods` 文件夹，不要把多个不同游戏版本的 jar 同时塞进同一个游戏实例。

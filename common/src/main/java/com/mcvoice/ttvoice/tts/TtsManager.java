@@ -9,21 +9,42 @@ import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.SourceDataLine;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 public final class TtsManager {
+    private static final int MAX_PENDING_SPEECH = 8;
+    private static final int MAX_TEXT_CHUNK = 200;
+
     private static final Queue<short[]> SVC_QUEUE = new ArrayDeque<>();
     private static final AtomicBoolean SPEAKING = new AtomicBoolean(false);
+    private static final AtomicLong RUN_ID = new AtomicLong();
     private static SourceDataLine localLine;
-    private static final ExecutorService WORKER = Executors.newSingleThreadExecutor(r -> {
-        Thread thread = new Thread(r, "MCVoice-TTS");
-        thread.setDaemon(true);
-        return thread;
-    });
+    private static final ThreadPoolExecutor WORKER = new ThreadPoolExecutor(
+        1,
+        1,
+        0L,
+        TimeUnit.MILLISECONDS,
+        new LinkedBlockingQueue<>(MAX_PENDING_SPEECH),
+        r -> {
+            Thread thread = new Thread(r, "MCVoice-TTS");
+            thread.setDaemon(true);
+            return thread;
+        },
+        (runnable, executor) -> {
+            // 积压过多时丢掉最旧的请求，避免慢速网络下任务无限堆积。
+            if (!executor.isShutdown()) {
+                executor.getQueue().poll();
+                executor.execute(runnable);
+            }
+        }
+    );
 
     private static volatile TtsEngine engine;
     private static volatile Voice activeVoice;
@@ -49,15 +70,61 @@ public final class TtsManager {
         if (text == null || text.isBlank()) {
             return;
         }
-        WORKER.submit(() -> {
-            try {
-                ensureEngine();
-                short[] pcm = engine.synthesize(text);
+        long runId = RUN_ID.get();
+        WORKER.execute(() -> speakTask(runId, text));
+    }
+
+    private static void speakTask(long runId, String text) {
+        try {
+            ensureEngine();
+            List<String> parts = splitText(text);
+            for (String part : parts) {
+                if (RUN_ID.get() != runId) {
+                    return;
+                }
+                short[] pcm = engine.synthesize(part);
+                if (RUN_ID.get() != runId) {
+                    return;
+                }
                 play(pcm);
-            } catch (Exception e) {
-                McVoiceConstants.LOGGER.error("TTS synthesis failed", e);
             }
-        });
+        } catch (Exception e) {
+            McVoiceConstants.LOGGER.error("TTS synthesis failed", e);
+        }
+    }
+
+    /** 超长文本按句子边界分段，避免一次解码整段音频造成过高的内存峰值。 */
+    private static List<String> splitText(String text) {
+        List<String> parts = new ArrayList<>();
+        String remaining = text.trim();
+        while (remaining.length() > MAX_TEXT_CHUNK) {
+            int cut = findChunkCut(remaining);
+            parts.add(remaining.substring(0, cut));
+            remaining = remaining.substring(cut).trim();
+        }
+        if (!remaining.isEmpty()) {
+            parts.add(remaining);
+        }
+        return parts;
+    }
+
+    private static int findChunkCut(String text) {
+        int cut = MAX_TEXT_CHUNK;
+        for (int i = MAX_TEXT_CHUNK; i > 4; i--) {
+            char c = text.charAt(i - 1);
+            if (c == '。' || c == '！' || c == '？' || c == '；' || c == '，' || c == '、'
+                    || c == '.' || c == '!' || c == '?' || c == ';' || c == ',' || c == '\n'
+                    || Character.isWhitespace(c)) {
+                cut = i;
+                break;
+            }
+        }
+        if (cut < text.length() && Character.isLowSurrogate(text.charAt(cut))) {
+            cut--;
+        } else if (cut > 0 && Character.isHighSurrogate(text.charAt(cut - 1))) {
+            cut--;
+        }
+        return Math.max(1, cut);
     }
 
     public static void test() {
@@ -65,6 +132,7 @@ public final class TtsManager {
     }
 
     public static void stop() {
+        RUN_ID.incrementAndGet();
         PlasmoVoiceBridge.stop();
         synchronized (SVC_QUEUE) {
             SVC_QUEUE.clear();

@@ -14,6 +14,7 @@ import net.fabricmc.fabric.api.client.message.v1.ClientSendMessageEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import org.lwjgl.glfw.GLFW;
 import org.slf4j.Logger;
@@ -25,6 +26,7 @@ public class TtVoiceClient implements ClientModInitializer {
 
     private static KeyMapping speakKey;
     private static KeyMapping configKey;
+    private static KeyMapping autoKey;
 
     @Override
     public void onInitializeClient() {
@@ -55,12 +57,27 @@ public class TtVoiceClient implements ClientModInitializer {
         );
         KeyMappingHelper.registerKeyMapping(configKey);
 
+        autoKey = new KeyMapping(
+            "key." + MOD_ID + ".auto",
+            InputConstants.Type.KEYSYM,
+            GLFW.GLFW_KEY_B,
+            generalCategory
+        );
+        KeyMappingHelper.registerKeyMapping(autoKey);
+
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             while (speakKey.consumeClick()) {
                 ScreenUtil.setScreen(new SpeechScreen(null));
             }
             while (configKey.consumeClick()) {
                 ScreenUtil.setScreen(new ConfigScreen(null));
+            }
+            while (autoKey.consumeClick()) {
+                boolean enabled = ModConfig.toggleAutoSpeak();
+                if (client.player != null) {
+                    client.player.sendSystemMessage(Component.translatable(
+                        enabled ? "mcvoice.command.auto.on" : "mcvoice.command.auto.off"));
+                }
             }
         });
     }
