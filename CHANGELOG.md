@@ -4,6 +4,7 @@
 
 English:
 
+- Clarified the auto-read toggle label on the main config screen.
 - Added a B-key shortcut to toggle auto-read; it shares the same state and feedback messages as `/mcvoice auto`.
 - Edge direct connection now retries automatically and falls back to Microsoft's regional HTTP endpoint when direct stays unavailable; empty-audio responses are reported instead of failing silently.
 - Reduced memory pressure while speaking: speech requests are capped when queued, extra-long text is synthesized in segments, and MP3 decoding no longer keeps full duplicate copies of the audio.
@@ -11,6 +12,7 @@ English:
 
 中文：
 
+- 配置页一级菜单的自动朗读选项改名为“自动朗读输入聊天框的文字”。
 - 新增 B 键自动朗读开关，与配置页开关和 `/mcvoice auto` 状态同步，提示文字一致。
 - Edge 直连失败会自动重试，连续失败时自动回退微软区域 HTTP 线路；空音频会明确报错，不再静默失败。
 - 说话时内存优化：请求排队有上限、超长文本分段合成、MP3 解码不再保留整段重复副本。
