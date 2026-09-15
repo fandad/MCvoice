@@ -134,6 +134,7 @@ $artifacts = @(
         Pattern = "1.21.8"
         Category = "1.21.8"
         PvJar = "plasmovoice-fabric-1.21.6-2.1.16.jar"
+        DeployMods = $false
     },
     @{
         Source = Join-Path $projectRoot "mc1211\build\libs\mcvoice-$modVersion+1.21.1.jar"

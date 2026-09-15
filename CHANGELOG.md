@@ -1,5 +1,25 @@
 # MCvoice 更新说明 / Changelog
 
+## 0.2.5
+
+English:
+
+- Added Cantonese support: a new local voice, Xiao Mei (female), is available in the Sherpa model download section (about 108 MB); no account or login is required to download it.
+- Added Northeast Mandarin (Xiaobei) and Shaanxi Mandarin (Xiaoni), plus Sichuan Mandarin (Yunxi), to the free Edge voice list.
+- Fixed the Sichuan voice entry, which previously played standard Mandarin; it now maps to a real Sichuan voice.
+- Sherpa models now also load a matching `rule.fst` when present, which fixes number and date reading for models shipped with that file instead of `phone`/`date`/`number` FSTs.
+- Fixed overlapping buttons on the model download screen; the screen scrolls properly now that the Cantonese entry is present.
+- All four builds (26.x, 1.21.11, 1.21.8, 1.21.1) are updated to 0.2.5.
+
+中文：
+
+- 新增粤语支持：Sherpa 模型下载区新增本地声线"小美"（女声，约 108MB），下载不需要账号或登录。
+- 免费 Edge 音色新增东北话（小北）、陕西话（小妮）和四川话（云希）三套方言声线。
+- 修正四川话音色：原条目实际发出的是普通话，现已指向真正的四川话声线。
+- Sherpa 引擎在模型自带 `rule.fst` 时也会自动加载，修复了用该文件替代 `phone`/`date`/`number` 的模型的数字与日期朗读。
+- 修复模型下载页按钮重叠问题；加入粤语条目后页面可正常滚动。
+- 26.x、1.21.11、1.21.8、1.21.1 四个版本同步更新到 0.2.5。
+
 ## 0.2.4
 
 English:

@@ -25,7 +25,8 @@ public final class VoiceRegistry {
         "vits-zh-hf-fanchen-wnj", "中文 · 繁辰 WNJ（男声）",
         "sherpa-onnx-vits-zh-ll", "中文 · 小爱风格（多音色）",
         "vits-piper-zh_CN-chaowen-medium", "中文 · 超文（男声）",
-        "vits-piper-zh_CN-xiao_ya-medium", "中文 · 小雅"
+        "vits-piper-zh_CN-xiao_ya-medium", "中文 · 小雅",
+        "vits-cantonese-hf-xiaomaiiwn", "粤语 · 小美（女声）"
     );
 
     private VoiceRegistry() {

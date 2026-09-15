@@ -50,7 +50,7 @@ public final class SherpaEngine implements TtsEngine {
             return "";
         }
         StringBuilder paths = new StringBuilder();
-        for (String name : new String[]{"phone.fst", "date.fst", "number.fst"}) {
+        for (String name : new String[]{"phone.fst", "date.fst", "number.fst", "rule.fst"}) {
             Path candidate = dir.resolve(name);
             if (!Files.isRegularFile(candidate)) {
                 continue;

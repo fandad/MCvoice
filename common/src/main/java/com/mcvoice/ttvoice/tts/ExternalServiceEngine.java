@@ -210,7 +210,7 @@ public final class ExternalServiceEngine implements TtsEngine {
         }
         switch (configured) {
             case "female_sichuan":
-                return "zh-CN-XiaoxiaoNeural";
+                return "zh-CN-sichuan-YunxiNeural";
             case "male_zhubo":
                 return "zh-CN-YunxiNeural";
             case "male_rap":

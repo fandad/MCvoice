@@ -49,7 +49,10 @@ public final class SherpaModelDownloader {
             "vits-piper-zh_CN-chaowen-medium.tar.bz2"),
         "vits-piper-zh_CN-xiao_ya-medium", new ModelDef(
             "小雅",
-            "vits-piper-zh_CN-xiao_ya-medium.tar.bz2")
+            "vits-piper-zh_CN-xiao_ya-medium.tar.bz2"),
+        "vits-cantonese-hf-xiaomaiiwn", new ModelDef(
+            "粤语 · 小美（女声）",
+            "vits-cantonese-hf-xiaomaiiwn.tar.bz2")
     );
 
     private SherpaModelDownloader() {

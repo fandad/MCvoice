@@ -81,6 +81,7 @@
   "download.mcvoice.sherpa.xiaomi": "小爱风格 多音色 · 约 115MB",
   "download.mcvoice.sherpa.chaowen": "超文 男声 · 约 60MB",
   "download.mcvoice.sherpa.xiaoya": "小雅 · 约 60MB",
+  "download.mcvoice.sherpa.cantonese": "粤语 小美 女声 · 约 108MB",
   "download.mcvoice.openFolder": "打开模型文件夹",
   "download.mcvoice.status.ready": "左侧为 Piper 声线，右侧为 Sherpa 声线。下载完成后，返回配置页切换声线即可使用。",
   "download.mcvoice.downloading": "下载中...",

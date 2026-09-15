@@ -345,7 +345,10 @@ public class ExternalTtsServiceScreen extends Screen {
             "zh-CN-YunxiNeural",
             "zh-CN-YunjianNeural",
             "zh-CN-XiaoshuangNeural",
-            "zh-CN-YunyangNeural"
+            "zh-CN-YunyangNeural",
+            "zh-CN-liaoning-XiaobeiNeural",
+            "zh-CN-shaanxi-XiaoniNeural",
+            "zh-CN-sichuan-YunxiNeural"
         );
     }
 
@@ -361,7 +364,10 @@ public class ExternalTtsServiceScreen extends Screen {
             "zh-CN-YunxiNeural",
             "zh-CN-YunjianNeural",
             "zh-CN-XiaoshuangNeural",
-            "zh-CN-YunyangNeural"
+            "zh-CN-YunyangNeural",
+            "zh-CN-liaoning-XiaobeiNeural",
+            "zh-CN-shaanxi-XiaoniNeural",
+            "zh-CN-sichuan-YunxiNeural"
         );
     }
 
@@ -428,7 +434,7 @@ public class ExternalTtsServiceScreen extends Screen {
             case "male_rap":
                 return "音色：男声说唱";
             case "female_sichuan":
-                return "音色：女声四川话";
+                return "音色：男声四川话";
             case "male_db":
                 return "音色：男声低沉";
             case "zh-CN-XiaoyiNeural":
@@ -443,6 +449,12 @@ public class ExternalTtsServiceScreen extends Screen {
                 return "音色：晓双";
             case "zh-CN-YunyangNeural":
                 return "音色：云扬";
+            case "zh-CN-liaoning-XiaobeiNeural":
+                return "音色：小北（东北话）";
+            case "zh-CN-shaanxi-XiaoniNeural":
+                return "音色：小妮（陕西话）";
+            case "zh-CN-sichuan-YunxiNeural":
+                return "音色：云希（四川话）";
             default:
                 return "音色：" + voice;
         }

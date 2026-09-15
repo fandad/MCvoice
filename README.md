@@ -17,7 +17,8 @@ MC语音是面向 Minecraft Fabric 的文字转语音模组，当前提供 26.x�
 - 通过 Simple Voice Chat 播放音频
 - 支持 Plasmo Voice 服务端桥接，PV 玩家也能听到 TTS
 - 支持 Piper 离线中文模型，可一键下载或手动放入多个声线
-- 支持 Sherpa-onnx 离线中文模型，提供更多本地声线
+- 支持 Sherpa-onnx 离线中文模型，提供更多本地声线，含粤语声线"小美"
+- 免费线路提供方言声线：东北话（小北）、陕西话（小妮）、四川话（云希）
 - 支持 Windows SAPI 系统声线，不需要额外下载模型
 - 支持外部 TTS 命令，可接入 edge-tts、自建脚本或任意能输出 WAV 的工具
 - 支持外部 TTS 服务，可选用内置免费 TTS、URL 模板或 OpenAI 兼容接口
@@ -81,7 +82,9 @@ mcvoice/models/sherpa/<模型名>/
   lexicon.txt（可选）
 ```
 
-当前右侧一键下载包含：MeloTTS 中英女声、寒冰、伊拉、繁辰 WNJ、小爱风格、超文、小雅。超文和小雅来自 `phoneme_type=pinyin` 的 Piper 模型，但以 Sherpa-onnx 打包格式提供，不需要单独安装 g2pW 运行时。
+当前右侧一键下载包含：MeloTTS 中英女声、寒冰、伊拉、繁辰 WNJ、小爱风格、超文、小雅、**小美（粤语）**。超文和小雅来自 `phoneme_type=pinyin` 的 Piper 模型，但以 Sherpa-onnx 打包格式提供，不需要单独安装 g2pW 运行时。
+
+小美（粤语）约 108MB，来自 sherpa-onnx 官方模型库，下载不需要账号或登录。该模型自带 `rule.fst`，模组会自动加载它来改善数字和日期的朗读。
 
 ## Windows SAPI 系统声线
 
@@ -107,7 +110,7 @@ edge-tts --voice zh-CN-XiaoxiaoNeural --text "{text}" --write-media "{file}"
 - URL 模板：适合自建 GET 接口。
 - OpenAI 兼容：适合 OpenAI 或兼容服务的 `/audio/speech` 接口。
 
-免费 TTS 模式提供线路按钮，可在微软 Edge 直连和 apizero 备用之间切换。微软 Edge 直连支持标准中文音色；apizero 备用支持四川话等音色。如果备用线路限流或不可用，模组会自动回退到微软 Edge 直连，避免出现“显示生成成功但没有声音”的情况。
+免费 TTS 模式提供线路按钮，可在微软 Edge 直连和 apizero 备用之间切换。微软 Edge 直连在标准中文音色之外还支持方言声线——东北话（小北）、陕西话（小妮）、四川话（云希），在音色按钮里循环切换即可。apizero 备用支持四川话等音色。如果备用线路限流或不可用，模组会自动回退到微软 Edge 直连，避免出现“显示生成成功但没有声音”的情况。
 免费模式下会隐藏服务地址、API Key 和模型输入框，音色改为点击切换。
 
 微软 Edge 直连失败时会自动重试；连续失败时会自动回退到微软区域 HTTP 线路，降低单条线路抽风的影响。apizero 限流或不可用时仍会自动回退到 Edge 直连。若线路返回空音频，会明确提示而不是静默失败。
@@ -133,6 +136,15 @@ https://api.openai.com/v1/audio/speech
 说话时模组需要在内存中缓存当前语音；使用较大本地模型或在服务器里频繁说话时，如果遇到内存不足，建议在启动器中调高游戏分配内存，并可安装匹配游戏版本的内存优化类模组（例如 FerriteCore 等）。这只是建议提示，不是模组前置依赖。
 
 ## 版本历史
+
+### 0.2.5
+
+- Sherpa 下载区新增粤语声线“小美”（女声，约 108MB），免登录下载。
+- 免费线路新增东北话（小北）、陕西话（小妮）、四川话（云希）三套方言声线。
+- 修正四川话音色：原条目实际发出的是普通话，现已指向真正的四川话声线。
+- Sherpa 引擎在模型自带 `rule.fst` 时也会自动加载，改善该类模型的数字与日期朗读。
+- 修复模型下载页按钮重叠问题，加入粤语条目后页面可正常滚动。
+- 26.x、1.21.11、1.21.8、1.21.1 四个版本同步更新。
 
 ### 0.2.4
 
@@ -248,25 +260,25 @@ $env:JAVA_HOME = "C:\Program Files\Java\jdk-26.0.2"
 E:\gradle-9.6.1\bin\gradle.bat build --offline --no-daemon --no-watch-fs --no-parallel
 ```
 
-当前 0.2.4 实际产物为：
+当前 0.2.5 实际产物为：
 
 ```text
-mc26/build/libs/mcvoice-0.2.4+26.x.jar
-mc12111/build/libs/mcvoice-0.2.4+1.21.11.jar
-mc1218/build/libs/mcvoice-0.2.4+1.21.8.jar
-mc1211/build/libs/mcvoice-0.2.4+1.21.1.jar
+mc26/build/libs/mcvoice-0.2.5+26.x.jar
+mc12111/build/libs/mcvoice-0.2.5+1.21.11.jar
+mc1218/build/libs/mcvoice-0.2.5+1.21.8.jar
+mc1211/build/libs/mcvoice-0.2.5+1.21.1.jar
 ```
 
-`mcvoice-0.2.4+26.x.jar` 覆盖 26.1、26.1.1、26.1.2 和 26.2；`1.21.11`、`1.21.8`、`1.21.1` 各自独立。
+`mcvoice-0.2.5+26.x.jar` 覆盖 26.1、26.1.1、26.1.2 和 26.2；`1.21.11`、`1.21.8`、`1.21.1` 各自独立。
 
 ## 实例目录
 
 部署脚本会把当前版本所有目标 jar 一起复制到：
 
 ```text
-E:\项目历史\MCvoice\0.2.4实例
+E:\项目历史\MCvoice\0.2.5实例
 ```
 
 这个目录用于集中存放和备份同一版本的目标 jar。实际启动某个 Minecraft 版本时，只把对应游戏版本的 jar 放进该版本的 `mods` 文件夹，不要把多个不同游戏版本的 jar 同时塞进同一个游戏实例。
 
-`deploy.ps1` 不再更新 `1.21.11` 和 `1.21.1` 游戏文件夹，但仍会生成并备份对应 jar。
+`deploy.ps1` 不再更新 `1.21.11`、`1.21.8` 和 `1.21.1` 游戏文件夹，但仍会生成并备份对应 jar。

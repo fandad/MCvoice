@@ -28,7 +28,9 @@ public class ModelDownloadScreen extends Screen {
         new ModelSpec("vits-piper-zh_CN-chaowen-medium", true,
             "download.mcvoice.sherpa.chaowen"),
         new ModelSpec("vits-piper-zh_CN-xiao_ya-medium", true,
-            "download.mcvoice.sherpa.xiaoya")
+            "download.mcvoice.sherpa.xiaoya"),
+        new ModelSpec("vits-cantonese-hf-xiaomaiiwn", true,
+            "download.mcvoice.sherpa.cantonese")
     );
 
     private static final ModelDownloadManager MODEL_DOWNLOADS = ModelDownloadManager.get();
@@ -108,24 +110,27 @@ public class ModelDownloadScreen extends Screen {
             "download.mcvoice.sherpa.chaowen", "vits-piper-zh_CN-chaowen-medium", true));
         modelButtons.put("vits-piper-zh_CN-xiao_ya-medium", addButton(rightX, buttonY + 120, columnWidth,
             "download.mcvoice.sherpa.xiaoya", "vits-piper-zh_CN-xiao_ya-medium", true));
+        modelButtons.put("vits-cantonese-hf-xiaomaiiwn", addButton(rightX, buttonY + 140, columnWidth,
+            "download.mcvoice.sherpa.cantonese", "vits-cantonese-hf-xiaomaiiwn", true));
 
+        int contentBottomY = 284;
         addRenderableWidget(Button.builder(
                 Component.translatable("download.mcvoice.openFolder"),
                 button -> VoiceRegistry.openMcVoiceFolder())
-            .pos(centerX - buttonWidth / 2, 184 - scrollY)
+            .pos(centerX - buttonWidth / 2, 230 - scrollY)
             .size(buttonWidth, 18)
             .build());
 
         statusWidget = new MultiLineTextWidget(Component.literal(status), font);
         statusWidget.setX(x);
-        statusWidget.setY(210 - scrollY);
+        statusWidget.setY(254 - scrollY);
         statusWidget.setMaxWidth(buttonWidth);
         statusWidget.setMaxRows(3);
         statusWidget.setCentered(false);
         addRenderableWidget(statusWidget);
 
-        int availableHeight = Math.max(100, height - 50);
-        maxScrollY = Math.max(0, 242 - availableHeight);
+        int availableHeight = Math.max(100, height - 60);
+        maxScrollY = Math.max(0, contentBottomY - availableHeight);
         int oldScroll = scrollY;
         scrollY = Math.max(0, Math.min(scrollY, maxScrollY));
         if (scrollY != oldScroll) {
