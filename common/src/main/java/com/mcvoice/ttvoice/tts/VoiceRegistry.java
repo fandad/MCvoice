@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public final class VoiceRegistry {
     private static final Map<String, String> PIPER_NAMES = Map.of(
@@ -20,13 +21,55 @@ public final class VoiceRegistry {
     );
     private static final Map<String, String> SHERPA_NAMES = Map.of(
         "vits-melo-tts-zh_en", "中文 · MeloTTS 中英女声",
-        "vits-zh-hf-theresa", "中文 · 寒冰（多音色女声）",
-        "vits-zh-hf-eula", "中文 · 伊拉（多音色女声）",
+        "vits-zh-hf-theresa", "中文 · 寒冰（多音色）",
+        "vits-zh-hf-eula", "中文 · 伊拉（多音色）",
         "vits-zh-hf-fanchen-wnj", "中文 · 繁辰 WNJ（男声）",
         "sherpa-onnx-vits-zh-ll", "中文 · 小爱风格（多音色）",
         "vits-piper-zh_CN-chaowen-medium", "中文 · 超文（男声）",
         "vits-piper-zh_CN-xiao_ya-medium", "中文 · 小雅",
-        "vits-cantonese-hf-xiaomaiiwn", "粤语 · 小美（女声）"
+        "vits-cantonese-hf-xiaomaiiwn", "粤语 · 小美（女声）",
+        "matcha-icefall-zh-baker", "中文 · Matcha Baker（女声）",
+        "kokoro-int8-multi-lang-v1_0", "中英 · Kokoro 多音色"
+    );
+
+    /**
+     * Kokoro 多语言包（kokoro-multi-lang-v1_0）里中文音色的 speaker id 与显示名。
+     * 映射来自 sherpa-onnx 官方文档（speaker id 45-52 为中文音色组）。
+     */
+    private static final Map<Integer, String> KOKORO_ZH_SPEAKERS = Map.of(
+        45, "小北（女声）",
+        46, "小妮（女声）",
+        47, "晓晓（女声）",
+        48, "晓伊（女声）",
+        49, "云健（男声）",
+        50, "云希（男声）",
+        51, "云夏（男声）",
+        52, "云扬（男声）"
+    );
+
+    private static final Set<String> KOKORO_DIR_IDS = Set.of("kokoro-int8-multi-lang-v1_0");
+
+    /**
+     * 多说话人 VITS 模型：每个模型挑若干 speaker 单独作为一条声线。
+     * 这些 id 与试听样本一一对应（用户听过后留下的那批），并标注了男女声。
+     * 以后要换音色，改这里的数字即可（speaker 是模型内置的，模型不用重下）。
+     */
+    private static final Map<String, Map<Integer, String>> VITS_MULTI_SPEAKERS = Map.of(
+        "vits-zh-hf-theresa", Map.of(
+            66, "女声 1",
+            436, "女声 2",
+            249, "男声"),
+        "vits-zh-hf-eula", Map.of(
+            66, "女声 1",
+            376, "男声 1",
+            436, "女声 2",
+            623, "男声 2"),
+        "sherpa-onnx-vits-zh-ll", Map.of(
+            0, "女声 1",
+            2, "女声 2",
+            1, "男声 1",
+            3, "男声 2",
+            4, "男声 3")
     );
 
     private VoiceRegistry() {
@@ -195,7 +238,34 @@ public final class VoiceRegistry {
             : (Files.isDirectory(dir.resolve("espeak-ng-data"))
                 ? dir.resolve("espeak-ng-data")
                 : null);
+        boolean kokoro = KOKORO_DIR_IDS.contains(id) && Files.isRegularFile(dir.resolve("voices.bin"));
+        if (kokoro) {
+            addKokoroVoices(voices, dir, modelFile, tokens, dataDir, id);
+            return;
+        }
         String display = SHERPA_NAMES.getOrDefault(id, "中文 · " + id);
+        String lexPath = Files.isRegularFile(lexicon) ? lexicon.toAbsolutePath().toString() : "";
+        String dataPath = dataDir == null ? "" : dataDir.toAbsolutePath().toString();
+
+        // 多说话人 VITS：按挑好的 speaker 展开成多条声线。
+        Map<Integer, String> speakers = VITS_MULTI_SPEAKERS.get(id);
+        if (speakers != null) {
+            for (Map.Entry<Integer, String> entry : speakers.entrySet()) {
+                voices.add(new Voice(
+                    "sherpa:" + id + "#" + entry.getKey(),
+                    display + " · " + entry.getValue(),
+                    Voice.Engine.SHERPA,
+                    modelFile.toAbsolutePath().toString(),
+                    "",
+                    tokens.toAbsolutePath().toString(),
+                    lexPath,
+                    dataPath,
+                    entry.getKey()
+                ));
+            }
+            return;
+        }
+
         voices.add(new Voice(
             "sherpa:" + id,
             display,
@@ -203,10 +273,39 @@ public final class VoiceRegistry {
             modelFile.toAbsolutePath().toString(),
             "",
             tokens.toAbsolutePath().toString(),
-            Files.isRegularFile(lexicon) ? lexicon.toAbsolutePath().toString() : "",
-            dataDir == null ? "" : dataDir.toAbsolutePath().toString(),
+            lexPath,
+            dataPath,
             0
         ));
+    }
+
+    /** Kokoro 是单模型多音色：每个中文 speaker 单独作为一条声线，靠 speakerId 区分。 */
+    private static void addKokoroVoices(List<Voice> voices, Path dir, Path modelFile, Path tokens, Path dictDir, String id) {
+        Path voicesBin = dir.resolve("voices.bin");
+        Path lexicon = Files.isRegularFile(dir.resolve("lexicon.txt"))
+            ? dir.resolve("lexicon.txt")
+            : dir.resolve("lexicon-zh.txt");
+        Path espeakData = Files.isDirectory(dir.resolve("espeak-ng-data"))
+            ? dir.resolve("espeak-ng-data")
+            : null;
+        String baseName = SHERPA_NAMES.getOrDefault(id, "中英 · Kokoro");
+        for (Map.Entry<Integer, String> entry : KOKORO_ZH_SPEAKERS.entrySet()) {
+            int speakerId = entry.getKey();
+            voices.add(new Voice(
+                "kokoro:" + id + ":" + speakerId,
+                baseName + " · " + entry.getValue(),
+                Voice.Engine.KOKORO,
+                modelFile.toAbsolutePath().toString(),
+                "",
+                tokens.toAbsolutePath().toString(),
+                Files.isRegularFile(lexicon) ? lexicon.toAbsolutePath().toString() : "",
+                espeakData == null ? "" : espeakData.toAbsolutePath().toString(),
+                speakerId,
+                voicesBin.toAbsolutePath().toString(),
+                dictDir == null ? "" : dictDir.toAbsolutePath().toString(),
+                "zh"
+            ));
+        }
     }
 
     public static boolean isUsableSherpaModel(Path modelFile, Path tokensFile) {

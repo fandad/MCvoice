@@ -1,5 +1,33 @@
 # MCvoice 更新说明 / Changelog
 
+## 0.2.6
+
+English:
+
+- Added a voice picker screen: the voice button on the config screen now opens a list of every detected voice instead of cycling through them one by one. The active voice is shown greyed out and cannot be clicked, and multi-speaker models appear as separate entries.
+- Added the Kokoro multi-language engine (about 126 MB, 8 Chinese voices) and the Matcha Baker Chinese voice (about 72 MB) to the Sherpa download section.
+- The multi-speaker models Hanbing and Eila (804 speakers each) and Xiaoai Style (5 speakers) now expose selected speakers as individual voices, for 12 entries in total.
+- Sherpa model downloads now support HTTP Range resume: an interrupted download keeps its partial file and continues from where it stopped instead of starting over. The request timeout was raised from 20 to 30 minutes.
+- Download failures are now written to the game log together with the underlying error, instead of only being shown in the UI.
+- Reworked the model download screen into two blocks (Piper, then Sherpa / Matcha / Kokoro) laid out as an aligned two-column grid. A yellow notice at the top warns that some models have no reliable download source in mainland China and suggests using a GitHub accelerator.
+- Added a scroll bar and fixed the scroll range on the download screen so the bottom controls can always be reached.
+- The title of every scrollable screen now scrolls together with its content.
+- 1.21.8 is no longer deployed into a game folder; its jar is still built and archived.
+- All four builds (26.x, 1.21.11, 1.21.8, 1.21.1) are updated to 0.2.6.
+
+中文：
+
+- 新增声线选择界面：配置页的声线按钮不再逐个点击循环，而是打开声线列表；当前生效的那条显示为灰暗且不可点击，多音色模型会分成多个条目。
+- Sherpa 下载区新增 Kokoro 多语言引擎（约 126MB，含 8 个中文音色）与 Matcha Baker 中文声线（约 72MB）。
+- 多音色模型寒冰、伊拉（各 804 个说话人）与小爱风格（5 个说话人）现在把选定的说话人展开为独立声线，共 12 条。
+- Sherpa 模型下载支持 HTTP Range 断点续传：中断后保留半成品并从断点继续，不再从头重来；请求超时从 20 分钟提高到 30 分钟。
+- 下载失败现在会连同具体原因写入游戏日志，不再只在界面上显示。
+- 模型下载页重排为上下两块（Piper，然后 Sherpa / Matcha / Kokoro），按两列网格对齐排列；顶部新增黄色提示：部分模型国内没有稳定下载源，建议挂加速器（加速 GitHub 等）。
+- 下载页补充滚动条并修复滚动范围，底部按钮与文字现在一定能滚到。
+- 所有可滚动页面的标题现在随内容一起滚动。
+- 1.21.8 不再部署进游戏目录，jar 仍会构建与归档。
+- 26.x、1.21.11、1.21.8、1.21.1 四个版本同步更新到 0.2.6。
+
 ## 0.2.5
 
 English:

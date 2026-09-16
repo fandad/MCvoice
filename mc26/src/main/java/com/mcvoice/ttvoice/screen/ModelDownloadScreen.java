@@ -1,6 +1,7 @@
 package com.mcvoice.ttvoice.screen;
 
 import com.mcvoice.ttvoice.tts.ModelDownloadManager;
+import com.mcvoice.ttvoice.tts.Voice;
 import com.mcvoice.ttvoice.tts.VoiceRegistry;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
@@ -9,6 +10,7 @@ import net.minecraft.client.gui.components.StringWidget;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,7 +32,11 @@ public class ModelDownloadScreen extends Screen {
         new ModelSpec("vits-piper-zh_CN-xiao_ya-medium", true,
             "download.mcvoice.sherpa.xiaoya"),
         new ModelSpec("vits-cantonese-hf-xiaomaiiwn", true,
-            "download.mcvoice.sherpa.cantonese")
+            "download.mcvoice.sherpa.cantonese"),
+        new ModelSpec("matcha-icefall-zh-baker", true,
+            "download.mcvoice.sherpa.matcha"),
+        new ModelSpec("kokoro-int8-multi-lang-v1_0", true,
+            "download.mcvoice.sherpa.kokoro")
     );
 
     private static final ModelDownloadManager MODEL_DOWNLOADS = ModelDownloadManager.get();
@@ -61,7 +67,7 @@ public class ModelDownloadScreen extends Screen {
             MODEL_DOWNLOADS.prepare(spec.id, spec.sherpa);
         }
 
-        addRenderableWidget(new StringWidget(x, 14, buttonWidth, 20,
+        addRenderableWidget(new StringWidget(x, 14 - scrollY, buttonWidth, 20,
             Component.translatable("download.mcvoice.title"), font));
 
         if (!VoiceRegistry.isWindowsSupported()) {
@@ -82,54 +88,94 @@ public class ModelDownloadScreen extends Screen {
             return;
         }
 
+        // 顶部提醒：部分模型没有稳定的国内下载源（固定在最上方，不随滚动）
+        MultiLineTextWidget sourceNotice = new MultiLineTextWidget(
+            Component.translatable("download.mcvoice.source.notice").withColor(0xFFFF55),
+            font);
+        sourceNotice.setX(x);
+        sourceNotice.setY(30 - scrollY);
+        sourceNotice.setMaxWidth(buttonWidth);
+        sourceNotice.setMaxRows(2);
+        sourceNotice.setCentered(false);
+        addRenderableWidget(sourceNotice);
+
         int columnWidth = (buttonWidth - 8) / 2;
         int leftX = x;
         int rightX = x + columnWidth + 8;
-        int buttonY = 42 - scrollY;
+        final int buttonH = 18;   // 按钮实际高度
+        final int headerH = 20;   // 区块标题占位（含行高与余量）
+        final int rowStep = 20;   // 行距
+        final int sectionGap = 12;// 两块之间的额外留白
+        int topY = 56 - scrollY;  // 第一块标题的顶边（为顶部提醒让出一行）
+        int cursorY = topY;       // 当前元素的顶边
+        List<Voice> installed = VoiceRegistry.listVoices();
 
-        addRenderableWidget(new StringWidget(leftX, 31 - scrollY, columnWidth, 10,
-            Component.translatable("download.mcvoice.section.piper"), font));
-        modelButtons.put("zh_CN-huayan-medium", addButton(leftX, buttonY, columnWidth,
-            "download.mcvoice.medium", "zh_CN-huayan-medium", false));
-        modelButtons.put("zh_CN-huayan-x_low", addButton(leftX, buttonY + 20, columnWidth,
-            "download.mcvoice.low", "zh_CN-huayan-x_low", false));
+        List<String> modelIds = new ArrayList<>();
+        List<String> labelKeys = new ArrayList<>();
+        List<Boolean> sherpaFlags = new ArrayList<>();
+        modelIds.add("zh_CN-huayan-medium");
+        labelKeys.add("download.mcvoice.medium");
+        sherpaFlags.add(false);
+        modelIds.add("zh_CN-huayan-x_low");
+        labelKeys.add("download.mcvoice.low");
+        sherpaFlags.add(false);
+        for (ModelSpec spec : MODEL_SPECS) {
+            if (!spec.sherpa()) {
+                continue;
+            }
+            modelIds.add(spec.id());
+            labelKeys.add(spec.labelKey());
+            sherpaFlags.add(true);
+        }
 
-        addRenderableWidget(new StringWidget(rightX, 31 - scrollY, columnWidth, 10,
-            Component.translatable("download.mcvoice.section.sherpa"), font));
-        modelButtons.put("vits-melo-tts-zh_en", addButton(rightX, buttonY, columnWidth,
-            "download.mcvoice.sherpa.melo", "vits-melo-tts-zh_en", true));
-        modelButtons.put("vits-zh-hf-theresa", addButton(rightX, buttonY + 20, columnWidth,
-            "download.mcvoice.sherpa.theresa", "vits-zh-hf-theresa", true));
-        modelButtons.put("vits-zh-hf-eula", addButton(rightX, buttonY + 40, columnWidth,
-            "download.mcvoice.sherpa.eula", "vits-zh-hf-eula", true));
-        modelButtons.put("vits-zh-hf-fanchen-wnj", addButton(rightX, buttonY + 60, columnWidth,
-            "download.mcvoice.sherpa.fanchen", "vits-zh-hf-fanchen-wnj", true));
-        modelButtons.put("sherpa-onnx-vits-zh-ll", addButton(rightX, buttonY + 80, columnWidth,
-            "download.mcvoice.sherpa.xiaomi", "sherpa-onnx-vits-zh-ll", true));
-        modelButtons.put("vits-piper-zh_CN-chaowen-medium", addButton(rightX, buttonY + 100, columnWidth,
-            "download.mcvoice.sherpa.chaowen", "vits-piper-zh_CN-chaowen-medium", true));
-        modelButtons.put("vits-piper-zh_CN-xiao_ya-medium", addButton(rightX, buttonY + 120, columnWidth,
-            "download.mcvoice.sherpa.xiaoya", "vits-piper-zh_CN-xiao_ya-medium", true));
-        modelButtons.put("vits-cantonese-hf-xiaomaiiwn", addButton(rightX, buttonY + 140, columnWidth,
-            "download.mcvoice.sherpa.cantonese", "vits-cantonese-hf-xiaomaiiwn", true));
+        // 2 列网格：同一行的左右两个按钮顶部对齐，逐行向下排。
+        // 注意：每个模型都必须无条件建按钮（未下载的模型也要能点去下载），
+        // 已安装声线只用于把多音色模型（Kokoro）的多个 speaker 指向同一个按钮。
+        // 用 cursorY 逐个元素推进，标题也占位，避免标题压住按钮。
+        boolean inSherpaGroup = false;
+        for (int i = 0; i < modelIds.size(); i += 2) {
+            boolean currentIsSherpa = sherpaFlags.get(i);
+            if (!currentIsSherpa && i == 0) {
+                addRenderableWidget(new StringWidget(leftX, cursorY, buttonWidth, headerH,
+                    Component.translatable("download.mcvoice.section.piper"), font));
+                cursorY += headerH;
+            } else if (currentIsSherpa && !inSherpaGroup) {
+                cursorY += sectionGap;
+                addRenderableWidget(new StringWidget(leftX, cursorY, buttonWidth, headerH,
+                    Component.translatable("download.mcvoice.section.sherpa"), font));
+                cursorY += headerH;
+            }
+            inSherpaGroup = currentIsSherpa;
+            addModelButtons(installed, leftX, cursorY, columnWidth, labelKeys.get(i),
+                modelIds.get(i), sherpaFlags.get(i));
+            if (i + 1 < modelIds.size()) {
+                addModelButtons(installed, rightX, cursorY, columnWidth, labelKeys.get(i + 1),
+                    modelIds.get(i + 1), sherpaFlags.get(i + 1));
+            }
+            cursorY += rowStep;
+        }
 
-        int contentBottomY = 284;
+        int folderY = cursorY + (buttonH - rowStep) + 18;
+        // 内容底 = 状态文本最多 3 行的下沿 + 底部余量（保证滚到底时不压住返回按钮）。
+        int contentBottomY = folderY + 18 + 44;
         addRenderableWidget(Button.builder(
                 Component.translatable("download.mcvoice.openFolder"),
                 button -> VoiceRegistry.openMcVoiceFolder())
-            .pos(centerX - buttonWidth / 2, 230 - scrollY)
+            .pos(centerX - buttonWidth / 2, folderY)
             .size(buttonWidth, 18)
             .build());
 
         statusWidget = new MultiLineTextWidget(Component.literal(status), font);
         statusWidget.setX(x);
-        statusWidget.setY(254 - scrollY);
+        statusWidget.setY(folderY + 24);
         statusWidget.setMaxWidth(buttonWidth);
-        statusWidget.setMaxRows(3);
+        statusWidget.setMaxRows(2);
         statusWidget.setCentered(false);
         addRenderableWidget(statusWidget);
 
-        int availableHeight = Math.max(100, height - 60);
+        // 滚动上限：内容底 - 可视高度。可视高度只扣掉返回按钮所在的一条，
+        // 不再额外扣 60，否则窗口较矮（高 GUI 缩放）时滚不到底。
+        int availableHeight = Math.max(80, height - 96);
         maxScrollY = Math.max(0, contentBottomY - availableHeight);
         int oldScroll = scrollY;
         scrollY = Math.max(0, Math.min(scrollY, maxScrollY));
@@ -171,7 +217,7 @@ public class ModelDownloadScreen extends Screen {
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
         int oldScroll = scrollY;
-        scrollY = Math.max(0, Math.min(maxScrollY, scrollY - (int) Math.round(verticalAmount * 18)));
+        scrollY = Math.max(0, Math.min(maxScrollY, scrollY - (int) Math.round(verticalAmount * 24)));
         if (scrollY != oldScroll) {
             rebuildWidgets();
         }
@@ -185,6 +231,33 @@ public class ModelDownloadScreen extends Screen {
             .build();
         addRenderableWidget(button);
         return button;
+    }
+
+    /**
+     * 为每个模型无条件建一个按钮——未下载的模型也要能点去下载。
+     * 同时按“模型 ID”登记（供 tick() 更新下载状态），
+     * 并把该模型已安装的每个 speaker 声线 id 也指向同一个按钮，
+     * 这样多音色模型（Kokoro）不会重复建按钮，配置页选任一条声线时状态也一致。
+     */
+    private void addModelButtons(List<Voice> installed, int x, int y, int width,
+                                 String labelKey, String modelId, boolean sherpa) {
+        Button button = addButton(x, y, width, labelKey, modelId, sherpa);
+        modelButtons.put(modelId, button);
+        for (Voice voice : installed) {
+            if (matchesModel(voice, modelId, sherpa)) {
+                modelButtons.put(voice.getId(), button);
+            }
+        }
+    }
+
+    private static boolean matchesModel(Voice voice, String modelId, boolean sherpa) {
+        String id = voice.getId();
+        if (!sherpa) {
+            return id.equals("piper:" + modelId);
+        }
+        return id.equals("sherpa:" + modelId)
+            || id.startsWith("kokoro:" + modelId + ":")
+            || id.startsWith("sherpa:" + modelId + "#");
     }
 
     private void startDownload(String modelId, boolean sherpa) {

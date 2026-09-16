@@ -23,29 +23,29 @@ public class ConfigScreen extends Screen {
     private static final int COLOR_GREEN = 0xFF55FF55;
 
     private final Screen parent;
-    private final List<Voice> voices;
-    private int voiceIndex;
+    private List<Voice> voices = List.of();
     private int scrollY;
     private int maxScrollY;
     private StringWidget svcStatusWidget;
     private StringWidget pvStatusWidget;
     private MultiLineTextWidget pvWarningWidget;
     private MultiLineTextWidget localWarningWidget;
+    private Button voiceButtonRef;
 
     public ConfigScreen(Screen parent) {
         super(Component.translatable("config.mcvoice.title"));
         this.parent = parent;
-        this.voices = VoiceRegistry.listVoices();
-        this.voiceIndex = findCurrentVoice();
     }
 
     @Override
     protected void init() {
+        // 每次显示都重新扫描，避免下载新模型或换过声线后列表过期。
+        this.voices = VoiceRegistry.listVoices();
         int centerX = width / 2;
         int buttonWidth = Math.min(320, width - 40);
         int x = centerX - buttonWidth / 2;
 
-        addRenderableWidget(new StringWidget(x, 10, buttonWidth, 20,
+        addRenderableWidget(new StringWidget(x, 10 - scrollY, buttonWidth, 20,
             Component.translatable("config.mcvoice.title"), font));
 
         if (!VoiceRegistry.isWindowsSupported()) {
@@ -92,10 +92,13 @@ public class ConfigScreen extends Screen {
 
         int y = 72 - scrollY;
 
-        Button voiceButton = Button.builder(currentVoiceLabel(), button -> cycleVoice())
+        Button voiceButton = Button.builder(currentVoiceLabel(),
+                button -> ScreenUtil.setScreen(new VoiceSelectScreen(this)))
             .pos(x, y)
             .size(buttonWidth, 20)
             .build();
+        voiceButton.setTooltip(Tooltip.create(Component.translatable("config.mcvoice.voice.tooltip")));
+        voiceButtonRef = voiceButton;
         addRenderableWidget(voiceButton);
         y += 20;
 
@@ -199,31 +202,17 @@ public class ConfigScreen extends Screen {
             .build());
     }
 
-    private void cycleVoice() {
-        if (voices.isEmpty()) {
-            return;
-        }
-        voiceIndex = (voiceIndex + 1) % voices.size();
-        ModConfig.get().selectedVoice = voices.get(voiceIndex).getId();
-        ModConfig.save();
-        TtsManager.stop();
-        rebuildWidgets();
-    }
-
     private Component currentVoiceLabel() {
         if (voices.isEmpty()) {
             return Component.literal("没有可用声线");
         }
-        return Component.literal("当前声线：" + voices.get(voiceIndex).getDisplayName());
-    }
-
-    private int findCurrentVoice() {
-        for (int i = 0; i < voices.size(); i++) {
-            if (voices.get(i).getId().equals(ModConfig.get().selectedVoice)) {
-                return i;
+        for (Voice voice : voices) {
+            if (voice.getId().equals(ModConfig.get().selectedVoice)) {
+                return Component.literal("当前声线：" + voice.getDisplayName());
             }
         }
-        return 0;
+        // 配置里记录的声线当前不存在（例如模型被删了），如实显示 ID，不冒充别的声线。
+        return Component.literal("当前声线：" + ModConfig.get().selectedVoice);
     }
 
     private void refreshConnectionStatus() {
@@ -276,6 +265,9 @@ public class ConfigScreen extends Screen {
     @Override
     public void tick() {
         refreshConnectionStatus();
+        if (voiceButtonRef != null) {
+            voiceButtonRef.setMessage(currentVoiceLabel());
+        }
         super.tick();
     }
 

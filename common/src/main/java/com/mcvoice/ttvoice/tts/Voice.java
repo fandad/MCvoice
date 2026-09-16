@@ -4,6 +4,7 @@ public final class Voice {
     public enum Engine {
         PIPER,
         SHERPA,
+        KOKORO,
         SAPI
     }
 
@@ -16,13 +17,23 @@ public final class Voice {
     private final String lexiconPath;
     private final String dataDir;
     private final int speakerId;
+    private final String voicesPath;
+    private final String dictDir;
+    private final String lang;
 
     public Voice(String id, String displayName, Engine engine, String modelPath, String configPath) {
-        this(id, displayName, engine, modelPath, configPath, "", "", "", 0);
+        this(id, displayName, engine, modelPath, configPath, "", "", "", 0, "", "", "");
     }
 
     public Voice(String id, String displayName, Engine engine, String modelPath, String configPath,
                  String tokensPath, String lexiconPath, String dataDir, int speakerId) {
+        this(id, displayName, engine, modelPath, configPath, tokensPath, lexiconPath, dataDir,
+            speakerId, "", "", "");
+    }
+
+    public Voice(String id, String displayName, Engine engine, String modelPath, String configPath,
+                 String tokensPath, String lexiconPath, String dataDir, int speakerId,
+                 String voicesPath, String dictDir, String lang) {
         this.id = id;
         this.displayName = displayName;
         this.engine = engine;
@@ -32,6 +43,9 @@ public final class Voice {
         this.lexiconPath = lexiconPath;
         this.dataDir = dataDir;
         this.speakerId = speakerId;
+        this.voicesPath = voicesPath;
+        this.dictDir = dictDir;
+        this.lang = lang;
     }
 
     public String getId() {
@@ -68,5 +82,17 @@ public final class Voice {
 
     public int getSpeakerId() {
         return speakerId;
+    }
+
+    public String getVoicesPath() {
+        return voicesPath;
+    }
+
+    public String getDictDir() {
+        return dictDir;
+    }
+
+    public String getLang() {
+        return lang;
     }
 }

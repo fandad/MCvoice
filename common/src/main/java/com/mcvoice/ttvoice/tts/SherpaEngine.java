@@ -3,6 +3,7 @@ package com.mcvoice.ttvoice.tts;
 import com.k2fsa.sherpa.onnx.GeneratedAudio;
 import com.k2fsa.sherpa.onnx.OfflineTts;
 import com.k2fsa.sherpa.onnx.OfflineTtsConfig;
+import com.k2fsa.sherpa.onnx.OfflineTtsKokoroModelConfig;
 import com.k2fsa.sherpa.onnx.OfflineTtsModelConfig;
 import com.k2fsa.sherpa.onnx.OfflineTtsVitsModelConfig;
 
@@ -14,6 +15,22 @@ public final class SherpaEngine implements TtsEngine {
     private final int speakerId;
 
     public SherpaEngine(Voice voiceData) throws Exception {
+        OfflineTtsModelConfig modelConfig = (voiceData.getEngine() == Voice.Engine.KOKORO)
+            ? buildKokoro(voiceData)
+            : buildVits(voiceData);
+
+        OfflineTtsConfig.Builder configBuilder = OfflineTtsConfig.builder()
+            .setModel(modelConfig);
+        String ruleFsts = findRuleFsts(voiceData.getModelPath());
+        if (!ruleFsts.isBlank()) {
+            configBuilder.setRuleFsts(ruleFsts);
+        }
+        OfflineTtsConfig config = configBuilder.build();
+        this.tts = new OfflineTts(config);
+        this.speakerId = voiceData.getSpeakerId();
+    }
+
+    private static OfflineTtsModelConfig buildVits(Voice voiceData) {
         OfflineTtsVitsModelConfig.Builder vits = OfflineTtsVitsModelConfig.builder()
             .setModel(voiceData.getModelPath())
             .setTokens(voiceData.getTokensPath());
@@ -25,20 +42,33 @@ public final class SherpaEngine implements TtsEngine {
         } else if (!voiceData.getDataDir().isBlank()) {
             vits.setDataDir(voiceData.getDataDir());
         }
-
-        OfflineTtsModelConfig modelConfig = OfflineTtsModelConfig.builder()
+        return OfflineTtsModelConfig.builder()
             .setVits(vits.build())
             .setNumThreads(2)
             .build();
-        OfflineTtsConfig.Builder configBuilder = OfflineTtsConfig.builder()
-            .setModel(modelConfig);
-        String ruleFsts = findRuleFsts(voiceData.getModelPath());
-        if (!ruleFsts.isBlank()) {
-            configBuilder.setRuleFsts(ruleFsts);
+    }
+
+    private static OfflineTtsModelConfig buildKokoro(Voice voiceData) {
+        OfflineTtsKokoroModelConfig.Builder kokoro = OfflineTtsKokoroModelConfig.builder()
+            .setModel(voiceData.getModelPath())
+            .setVoices(voiceData.getVoicesPath())
+            .setTokens(voiceData.getTokensPath());
+        if (!voiceData.getLexiconPath().isBlank()) {
+            kokoro.setLexicon(voiceData.getLexiconPath());
         }
-        OfflineTtsConfig config = configBuilder.build();
-        this.tts = new OfflineTts(config);
-        this.speakerId = voiceData.getSpeakerId();
+        if (!voiceData.getDictDir().isBlank()) {
+            kokoro.setDictDir(voiceData.getDictDir());
+        }
+        if (!voiceData.getDataDir().isBlank()) {
+            kokoro.setDataDir(voiceData.getDataDir());
+        }
+        if (!voiceData.getLang().isBlank()) {
+            kokoro.setLang(voiceData.getLang());
+        }
+        return OfflineTtsModelConfig.builder()
+            .setKokoro(kokoro.build())
+            .setNumThreads(2)
+            .build();
     }
 
     private static String findRuleFsts(String modelPath) {

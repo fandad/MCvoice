@@ -1,5 +1,7 @@
 package com.mcvoice.ttvoice.tts;
 
+import com.mcvoice.ttvoice.McVoiceConstants;
+
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -51,7 +53,9 @@ public final class ModelDownloadManager {
             return;
         }
 
-        boolean resumed = PiperModelDownloader.hasPartialDownload(modelId);
+        boolean resumed = sherpa
+            ? SherpaModelDownloader.hasPartialDownload(modelId)
+            : PiperModelDownloader.hasPartialDownload(modelId);
         entry.state = State.DOWNLOADING;
         statusText = (resumed ? "准备继续下载：" : "准备下载：") + label;
 
@@ -66,12 +70,17 @@ public final class ModelDownloadManager {
                 }
                 entry.state = State.DOWNLOADED;
                 statusText = "已完成：" + label + " 已放入 mcvoice/models";
+                McVoiceConstants.LOGGER.info("模型下载完成：{}", label);
             } catch (Exception e) {
                 String error = e.getMessage() == null ? e.toString() : e.getMessage();
-                boolean resumable = PiperModelDownloader.hasPartialDownload(modelId);
+                boolean resumable = sherpa
+                    ? SherpaModelDownloader.hasPartialDownload(modelId)
+                    : PiperModelDownloader.hasPartialDownload(modelId);
                 entry.state = resumable ? State.RESUMABLE : State.FAILED;
                 statusText = "下载失败：" + error
                     + (resumable ? " · 已保留断点，点击按钮可继续下载" : "");
+                McVoiceConstants.LOGGER.warn(
+                    "模型下载失败：{}（{}，{}）", label, error, resumable ? "已保留断点" : "无断点", e);
             }
         }, "MCVoice-ModelDownload-" + modelId);
         thread.setDaemon(true);

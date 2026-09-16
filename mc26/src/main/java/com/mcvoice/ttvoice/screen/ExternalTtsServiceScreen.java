@@ -42,7 +42,7 @@ public class ExternalTtsServiceScreen extends Screen {
         int x = centerX - buttonWidth / 2;
         int y = 36 - scrollY;
 
-        addRenderableWidget(new StringWidget(centerX - buttonWidth / 2, 14, buttonWidth, 20,
+        addRenderableWidget(new StringWidget(centerX - buttonWidth / 2, 14 - scrollY, buttonWidth, 20,
             Component.translatable("config.mcvoice.external.service.title"), font));
 
         Checkbox enableCheckbox = Checkbox.builder(
