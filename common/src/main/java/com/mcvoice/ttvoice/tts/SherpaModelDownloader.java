@@ -38,34 +38,34 @@ public final class SherpaModelDownloader {
 
     private static final Map<String, ModelDef> MODELS = Map.of(
         "vits-melo-tts-zh_en", new ModelDef(
-            "MeloTTS 中英女声",
+            "voice.mcvoice.sherpa.melo",
             "vits-melo-tts-zh_en.tar.bz2"),
         "vits-zh-hf-theresa", new ModelDef(
-            "寒冰（多音色女声）",
+            "voice.mcvoice.sherpa.theresa",
             "vits-zh-hf-theresa.tar.bz2"),
         "vits-zh-hf-eula", new ModelDef(
-            "伊拉（多音色女声）",
+            "voice.mcvoice.sherpa.eula",
             "vits-zh-hf-eula.tar.bz2"),
         "vits-zh-hf-fanchen-wnj", new ModelDef(
-            "繁辰 WNJ（男声）",
+            "voice.mcvoice.sherpa.fanchen",
             "vits-zh-hf-fanchen-wnj.tar.bz2"),
         "sherpa-onnx-vits-zh-ll", new ModelDef(
-            "小爱风格（多音色）",
+            "voice.mcvoice.sherpa.xiaomi",
             "sherpa-onnx-vits-zh-ll.tar.bz2"),
         "vits-piper-zh_CN-chaowen-medium", new ModelDef(
-            "超文（男声）",
+            "voice.mcvoice.sherpa.chaowen",
             "vits-piper-zh_CN-chaowen-medium.tar.bz2"),
         "vits-piper-zh_CN-xiao_ya-medium", new ModelDef(
-            "小雅",
+            "voice.mcvoice.sherpa.xiaoya",
             "vits-piper-zh_CN-xiao_ya-medium.tar.bz2"),
         "vits-cantonese-hf-xiaomaiiwn", new ModelDef(
-            "粤语 · 小美（女声）",
+            "voice.mcvoice.sherpa.cantonese",
             "vits-cantonese-hf-xiaomaiiwn.tar.bz2"),
         "matcha-icefall-zh-baker", new ModelDef(
-            "中文 · Matcha Baker（女声）",
+            "voice.mcvoice.sherpa.matcha",
             "matcha-icefall-zh-baker.tar.bz2"),
         "kokoro-int8-multi-lang-v1_0", new ModelDef(
-            "中英 · Kokoro 多音色（8 个中文音色）",
+            "voice.mcvoice.sherpa.kokoro",
             "kokoro-int8-multi-lang-v1_0.tar.bz2")
     );
 
@@ -75,7 +75,7 @@ public final class SherpaModelDownloader {
     public static void download(String modelId, Path targetDir, ProgressListener listener) throws Exception {
         ModelDef model = MODELS.get(modelId);
         if (model == null) {
-            throw new IllegalArgumentException("未知模型: " + modelId);
+            throw new IllegalArgumentException(DownloadStatus.encode("download.mcvoice.error.unknown_model", modelId));
         }
         Files.createDirectories(targetDir);
 
@@ -83,22 +83,22 @@ public final class SherpaModelDownloader {
         Path partial = targetDir.resolve(model.archive() + ".part");
         Path modelDir = targetDir.resolve(modelId);
         try {
-            listener.update("正在下载 " + model.displayName() + " · " + model.archive());
+            listener.update(DownloadStatus.encode("download.mcvoice.status.downloading", model.nameKey(), model.archive()));
             // 断点续传：下载写到 .part，成功后再改名，中途失败保留 .part 供下次继续。
             downloadFile(model.archive(), partial, listener);
             if (Files.size(partial) < 1_000_000L) {
                 Files.deleteIfExists(partial);
-                throw new IOException("下载的模型压缩包过小，可能不是有效模型");
+                throw new IOException(DownloadStatus.encode("download.mcvoice.error.archive_too_small"));
             }
             Files.move(partial, archive, StandardCopyOption.REPLACE_EXISTING);
 
-            listener.update("正在解压 " + model.displayName() + " ...");
+            listener.update(DownloadStatus.encode("download.mcvoice.status.extracting", model.nameKey()));
             extract(archive, targetDir, listener);
             Files.deleteIfExists(archive);
             if (VoiceRegistry.findSherpaModelFile(modelDir) == null) {
-                throw new IOException("模型下载完成但校验未通过");
+                throw new IOException(DownloadStatus.encode("download.mcvoice.error.verify_failed"));
             }
-            listener.update("完成：" + model.displayName() + " 已放入 mcvoice/models/sherpa");
+            listener.update(DownloadStatus.encode("download.mcvoice.status.done_sherpa", model.nameKey()));
         } catch (Exception e) {
             cleanup(targetDir, modelDir, archive);
             throw e;
@@ -136,7 +136,7 @@ public final class SherpaModelDownloader {
                 // 保留 .part，交给下一个镜像继续续传（而不是删掉重来）。
             }
         }
-        throw new IOException("所有下载源都失败了：" + lastError.getMessage(), lastError);
+        throw new IOException(DownloadStatus.encode("download.mcvoice.error.all_sources_failed", lastError.getMessage()), lastError);
     }
 
     /**
@@ -168,7 +168,7 @@ public final class SherpaModelDownloader {
 
             if (status == 416) {
                 if (existing > 0L && !restarted) {
-                    listener.update("服务器已没有匹配的断点，正在重新下载 " + fileName);
+                    listener.update(DownloadStatus.encode("download.mcvoice.status.restart_norange", fileName));
                     Files.deleteIfExists(target);
                     existing = 0L;
                     restarted = true;
@@ -192,7 +192,7 @@ public final class SherpaModelDownloader {
                 try (InputStream in = response.body()) {
                     in.transferTo(OutputStream.nullOutputStream());
                 }
-                throw new IOException("服务返回了网页而不是模型文件");
+                throw new IOException(DownloadStatus.encode("download.mcvoice.error.html_not_file"));
             }
 
             long total = contentLength(response, status);
@@ -200,19 +200,19 @@ public final class SherpaModelDownloader {
             if (status == 206 && existing > 0L) {
                 Optional<Long> rangeStart = contentRangeStart(response);
                 if (rangeStart.isPresent() && rangeStart.get() != existing && !restarted) {
-                    listener.update("下载源不支持续传，正在重新下载 " + fileName);
+                    listener.update(DownloadStatus.encode("download.mcvoice.status.restart_noresume", fileName));
                     Files.deleteIfExists(target);
                     existing = 0L;
                     restarted = true;
                     continue;
                 }
                 if (rangeStart.isPresent() && rangeStart.get() != existing) {
-                    throw new IOException("下载源返回了不连续的断点范围");
+                    throw new IOException(DownloadStatus.encode("download.mcvoice.error.bad_range"));
                 }
                 append = true;
             } else {
                 if (existing > 0L) {
-                    listener.update("下载源不支持续传，正在重新下载 " + fileName);
+                    listener.update(DownloadStatus.encode("download.mcvoice.status.restart_noresume", fileName));
                 }
                 Files.deleteIfExists(target);
                 existing = 0L;
@@ -230,12 +230,12 @@ public final class SherpaModelDownloader {
                     done += read;
                     if (total > 0) {
                         listener.update(String.format(
-                            "正在下载 %s · %.1f / %.1f MB",
-                            fileName, done / 1024.0 / 1024.0, total / 1024.0 / 1024.0));
+                            "download.mcvoice.status.progress\u001f%s\u001f%s",
+                            fileName, String.format("%.1f / %.1f MB", done / 1024.0 / 1024.0, total / 1024.0 / 1024.0)));
                     } else {
                         listener.update(String.format(
-                            "正在下载 %s · %.1f MB",
-                            fileName, done / 1024.0 / 1024.0));
+                            "download.mcvoice.status.progress\u001f%s\u001f%s",
+                            fileName, String.format("%.1f MB", done / 1024.0 / 1024.0)));
                     }
                 }
             }
@@ -360,7 +360,7 @@ public final class SherpaModelDownloader {
             TarArchiveEntry entry;
             while ((entry = (TarArchiveEntry) tar.getNextEntry()) != null) {
                 String name = entry.getName().replace('\\', '/');
-                listener.update("正在解压 · " + name);
+                listener.update(DownloadStatus.encode("download.mcvoice.status.extracting_file", name));
                 Path out = base.resolve(name).normalize();
                 if (!out.startsWith(base)) {
                     continue;
@@ -375,6 +375,6 @@ public final class SherpaModelDownloader {
         }
     }
 
-    private record ModelDef(String displayName, String archive) {
+    private record ModelDef(String nameKey, String archive) {
     }
 }

@@ -1,5 +1,6 @@
 package com.mcvoice.ttvoice.screen;
 
+import com.mcvoice.ttvoice.tts.DownloadStatus;
 import com.mcvoice.ttvoice.tts.ModelDownloadManager;
 import com.mcvoice.ttvoice.tts.Voice;
 import com.mcvoice.ttvoice.tts.VoiceRegistry;
@@ -53,7 +54,7 @@ public class ModelDownloadScreen extends Screen {
         this.parent = parent;
         this.status = MODEL_DOWNLOADS.statusText();
         if (this.status == null || this.status.isBlank()) {
-            this.status = Component.translatable("download.mcvoice.status.ready").getString();
+            this.status = "download.mcvoice.status.ready";
         }
     }
 
@@ -165,7 +166,7 @@ public class ModelDownloadScreen extends Screen {
             .size(buttonWidth, 18)
             .build());
 
-        statusWidget = new MultiLineTextWidget(Component.literal(status), font);
+        statusWidget = new MultiLineTextWidget(ScreenUtil.statusComponent(status), font);
         statusWidget.setX(x);
         statusWidget.setY(folderY + 24);
         statusWidget.setMaxWidth(buttonWidth);
@@ -209,7 +210,7 @@ public class ModelDownloadScreen extends Screen {
             status = currentStatus;
         }
         if (statusWidget != null) {
-            statusWidget.setMessage(Component.literal(status));
+            statusWidget.setMessage(ScreenUtil.statusComponent(status));
         }
         super.tick();
     }
@@ -272,7 +273,7 @@ public class ModelDownloadScreen extends Screen {
                 return spec;
             }
         }
-        throw new IllegalArgumentException("未知模型: " + modelId);
+        throw new IllegalArgumentException(DownloadStatus.encode("download.mcvoice.error.unknown_model", modelId));
     }
 
     private static Component buttonMessage(ModelSpec spec, ModelDownloadManager.State state) {

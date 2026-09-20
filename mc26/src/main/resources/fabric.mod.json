@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "id": "mcvoice",
   "version": "${version}",
-  "name": "MC语音",
-  "description": "在聊天框输入文字，本地生成中文语音；通过 Simple Voice Chat 或 Plasmo Voice 让服务器里的其他玩家听到。",
+  "name": "MCvoice（MC语音）",
+  "description": "在聊天框输入文字，本地生成中文语音；通过 Simple Voice Chat 或 Plasmo Voice 让服务器里的其他玩家听到。 / Type text in chat to generate local Chinese speech, then send it to other players through Simple Voice Chat or Plasmo Voice.",
   "authors": [
     "MCvoice"
   ],

@@ -72,7 +72,7 @@ public class SpeechScreen extends Screen {
         addRenderableWidget(speakButton);
         addRenderableWidget(stopButton);
 
-        lingerButton = Button.builder(Component.literal(lingerLabel(columnWidth >= 100)),
+        lingerButton = Button.builder(Component.translatable(lingerLabel(columnWidth >= 100)),
                 button -> toggleLinger())
             .pos(historyLeft, buttonRow2)
             .size(columnWidth, 20)
@@ -81,7 +81,7 @@ public class SpeechScreen extends Screen {
             Component.translatable("speech.mcvoice.linger.tooltip")));
         addRenderableWidget(lingerButton);
 
-        addRenderableWidget(Button.builder(Component.literal("返回"),
+        addRenderableWidget(Button.builder(Component.translatable("gui.mcvoice.back"),
                 button -> closeToParent())
             .pos(historyLeft + columnWidth + gap, buttonRow2)
             .size(columnWidth, 20)
@@ -97,7 +97,7 @@ public class SpeechScreen extends Screen {
             return;
         }
         if (HISTORY.isEmpty()) {
-            Button hint = Button.builder(Component.literal("还没有历史记录"),
+            Button hint = Button.builder(Component.translatable("speech.mcvoice.history.empty"),
                     button -> {
                     })
                 .pos(historyLeft, HISTORY_TOP)
@@ -194,9 +194,9 @@ public class SpeechScreen extends Screen {
     private static String lingerLabel(boolean wide) {
         boolean on = ModConfig.get().lingerMode;
         if (wide) {
-            return on ? "滞留模式：开" : "滞留模式：关";
+            return on ? "speech.mcvoice.linger.state.on" : "speech.mcvoice.linger.state.off";
         }
-        return on ? "滞留:开" : "滞留:关";
+        return on ? "speech.mcvoice.linger.short.on" : "speech.mcvoice.linger.short.off";
     }
 
     @Override

@@ -27,6 +27,13 @@ public final class ModConfig {
         public String serviceApiKey = "";
         public String serviceVoice = "zh-CN-XiaoyiNeural";
         public String serviceModel = "";
+
+        /** 音频输出模式："game" 只游戏内（默认）、"device" 只送所选设备、"both" 两边都放。 */
+        public String audioOutMode = "game";
+        /** 目标输出设备名（AudioSystem 的 mixer 名），空 = 未选择。 */
+        public String audioOutDevice = "";
+        /** 发往该设备的音量，0~2（与游戏内音量独立）。 */
+        public float audioOutVolume = 1.0f;
     }
 
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();

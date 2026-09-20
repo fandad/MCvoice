@@ -151,7 +151,7 @@ public final class McVoiceCommands {
         }
         Component message = Component.literal("");
         for (Voice voice : voices) {
-            message = message.copy().append(Component.literal(" - " + voice.getDisplayName() + " (" + voice.getId() + ")\n"));
+            message = message.copy().append(Component.literal(" - ")).append(ScreenUtil.voiceName(voice)).append(Component.literal(" (" + voice.getId() + ")\n"));
         }
         ctx.getSource().sendFeedback(Component.translatable("mcvoice.command.voice.list").copy().append(message));
         return 1;
@@ -167,7 +167,7 @@ public final class McVoiceCommands {
         ModConfig.get().selectedVoice = id;
         ModConfig.save();
         TtsManager.stop();
-        ctx.getSource().sendFeedback(Component.translatable("mcvoice.command.voice.set", voice.getDisplayName()));
+        ctx.getSource().sendFeedback(Component.translatable("mcvoice.command.voice.set", ScreenUtil.voiceName(voice)));
         return 1;
     }
 

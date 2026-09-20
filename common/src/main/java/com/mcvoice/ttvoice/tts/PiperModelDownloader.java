@@ -35,12 +35,12 @@ public final class PiperModelDownloader {
 
     private static final Map<String, ModelDef> MODELS = Map.of(
         "zh_CN-huayan-medium", new ModelDef(
-            "花颜（中）",
+            "voice.mcvoice.piper.huayan_medium",
             "zh/zh_CN/huayan/medium",
             "zh_CN-huayan-medium.onnx",
             "zh_CN-huayan-medium.onnx.json"),
         "zh_CN-huayan-x_low", new ModelDef(
-            "花颜（低配）",
+            "voice.mcvoice.piper.huayan_xlow",
             "zh/zh_CN/huayan/x_low",
             "zh_CN-huayan-x_low.onnx",
             "zh_CN-huayan-x_low.onnx.json")
@@ -69,7 +69,7 @@ public final class PiperModelDownloader {
     public static void download(String modelId, Path modelDir, ProgressListener listener) throws Exception {
         ModelDef model = MODELS.get(modelId);
         if (model == null) {
-            throw new IllegalArgumentException("未知模型: " + modelId);
+            throw new IllegalArgumentException(DownloadStatus.encode("download.mcvoice.error.unknown_model", modelId));
         }
         Files.createDirectories(modelDir);
 
@@ -80,7 +80,7 @@ public final class PiperModelDownloader {
                 Path target = modelDir.resolve(fileName);
                 Path part = modelDir.resolve(fileName + ".part");
                 if (Files.isRegularFile(target) && isValidDownloadedFile(fileName, target)) {
-                    listener.update("已存在：" + model.displayName() + " · " + fileName);
+                    listener.update(DownloadStatus.encode("download.mcvoice.status.exists", model.nameKey(), fileName));
                     continue;
                 }
                 if (Files.isRegularFile(target)) {
@@ -88,7 +88,7 @@ public final class PiperModelDownloader {
                 }
 
                 List<URI> uris = downloadUris(model.path(), fileName);
-                listener.update("正在下载 " + model.displayName() + " · " + fileName);
+                listener.update(DownloadStatus.encode("download.mcvoice.status.downloading", model.nameKey(), fileName));
                 downloadFile(uris, part, fileName, listener);
                 validateDownloadedFile(part, fileName);
                 Files.move(part, target, StandardCopyOption.REPLACE_EXISTING);
@@ -97,9 +97,9 @@ public final class PiperModelDownloader {
                 }
             }
             if (!VoiceRegistry.isUsableModel(modelFile, configFile)) {
-                throw new IOException("模型下载完成但校验未通过");
+                throw new IOException(DownloadStatus.encode("download.mcvoice.error.verify_failed"));
             }
-            listener.update("完成：" + model.displayName() + " 已放入 mcvoice/models");
+            listener.update(DownloadStatus.encode("download.mcvoice.status.done", model.nameKey()));
         } catch (Exception e) {
             cleanup(modelDir, model);
             throw e;
@@ -147,12 +147,12 @@ public final class PiperModelDownloader {
     private static void validateDownloadedFile(Path part, String fileName) throws IOException {
         if (fileName.endsWith(".onnx") && Files.size(part) < 1_000_000L) {
             Files.deleteIfExists(part);
-            throw new IOException("下载的 ONNX 模型文件过小，可能不是有效模型");
+            throw new IOException(DownloadStatus.encode("download.mcvoice.error.onnx_too_small"));
         }
         if (fileName.endsWith(".onnx.json")) {
             if (Files.size(part) <= 10L || !startsWithJsonObject(part)) {
                 Files.deleteIfExists(part);
-                throw new IOException("下载的模型配置不是有效 JSON");
+                throw new IOException(DownloadStatus.encode("download.mcvoice.error.config_not_json"));
             }
         }
     }
@@ -163,21 +163,21 @@ public final class PiperModelDownloader {
         for (int index = 0; index < uris.size(); index++) {
             URI uri = uris.get(index);
             String host = uri.getHost();
-            listener.update("正在连接 " + host + "，下载 " + fileName
-                + "（第 " + (index + 1) + " 个下载源）...");
+            listener.update(DownloadStatus.encode("download.mcvoice.status.connecting", host, fileName, String.valueOf(index + 1)
+                ));
             try {
                 downloadFromUri(uri, target, fileName, listener);
                 return;
             } catch (Exception e) {
                 lastError = e;
                 String detail = Files.isRegularFile(target)
-                    ? "，已保留 " + Files.size(target) / 1024.0 / 1024.0 + " MB"
+                    ? DownloadStatus.encode("download.mcvoice.status.kept", String.format("%.1f", Files.size(target) / 1024.0 / 1024.0))
                     : "";
-                listener.update(host + " 下载失败：" + briefError(e) + detail
-                    + (index + 1 < uris.size() ? "，继续尝试备用源" : ""));
+                listener.update(DownloadStatus.encode("download.mcvoice.status.host_failed", host, briefError(e), detail,
+                    index + 1 < uris.size() ? DownloadStatus.encode("download.mcvoice.status.retry_backup") : ""));
             }
         }
-        throw new IOException("所有下载源都失败了：" + lastError.getMessage(), lastError);
+        throw new IOException(DownloadStatus.encode("download.mcvoice.error.all_sources_failed", lastError.getMessage()), lastError);
     }
 
     private static List<URI> downloadUris(String path, String fileName) {
@@ -214,7 +214,7 @@ public final class PiperModelDownloader {
             int status = response.statusCode();
             if (status == 416) {
                 if (existing > 0L && !restartedAfter416) {
-                    listener.update("服务器已没有匹配的断点，正在重新下载 " + fileName);
+                    listener.update(DownloadStatus.encode("download.mcvoice.status.restart_norange", fileName));
                     Files.deleteIfExists(target);
                     existing = 0L;
                     restartedAfter416 = true;
@@ -235,7 +235,7 @@ public final class PiperModelDownloader {
                 try (InputStream in = response.body()) {
                     in.transferTo(OutputStream.nullOutputStream());
                 }
-                throw new IOException("服务返回了网页而不是模型文件");
+                throw new IOException(DownloadStatus.encode("download.mcvoice.error.html_not_file"));
             }
 
             long total = contentLength(response, status, existing);
@@ -245,19 +245,19 @@ public final class PiperModelDownloader {
                 if (rangeStart.isPresent()
                         && rangeStart.get() != existing
                         && !restartedAfter416) {
-                    listener.update("下载源不支持续传，正在重新下载 " + fileName);
+                    listener.update(DownloadStatus.encode("download.mcvoice.status.restart_noresume", fileName));
                     Files.deleteIfExists(target);
                     existing = 0L;
                     restartedAfter416 = true;
                     continue;
                 }
                 if (rangeStart.isPresent() && rangeStart.get() != existing) {
-                    throw new IOException("下载源返回了不连续的断点范围");
+                    throw new IOException(DownloadStatus.encode("download.mcvoice.error.bad_range"));
                 }
                 append = true;
             } else {
                 if (existing > 0L) {
-                    listener.update("下载源不支持续传，正在重新下载 " + fileName);
+                    listener.update(DownloadStatus.encode("download.mcvoice.status.restart_noresume", fileName));
                 }
                 Files.deleteIfExists(target);
                 existing = 0L;
@@ -275,12 +275,12 @@ public final class PiperModelDownloader {
                     done += read;
                     if (total > 0) {
                         listener.update(String.format(
-                            "正在下载 %s · %.1f / %.1f MB",
-                            fileName, done / 1024.0 / 1024.0, total / 1024.0 / 1024.0));
+                            "download.mcvoice.status.progress\u001f%s\u001f%s",
+                            fileName, String.format("%.1f / %.1f MB", done / 1024.0 / 1024.0, total / 1024.0 / 1024.0)));
                     } else {
                         listener.update(String.format(
-                            "正在下载 %s · %.1f MB",
-                            fileName, done / 1024.0 / 1024.0));
+                            "download.mcvoice.status.progress\u001f%s\u001f%s",
+                            fileName, String.format("%.1f MB", done / 1024.0 / 1024.0)));
                     }
                 }
             }
@@ -337,7 +337,7 @@ public final class PiperModelDownloader {
         return message;
     }
 
-    private record ModelDef(String displayName, String path, String modelFile, String configFile) {
+    private record ModelDef(String nameKey, String path, String modelFile, String configFile) {
         private List<String> files() {
             return List.of(modelFile, configFile);
         }

@@ -21,6 +21,13 @@ public class ConfigScreen extends Screen {
     private static final int COLOR_RED = 0xFFFF5555;
     private static final int COLOR_YELLOW = 0xFFFFFF55;
     private static final int COLOR_GREEN = 0xFF55FF55;
+    private static final int COLOR_GREY = 0xFFAAAAAA;
+    /** 英文吐槽的绘制缩放（MC 没有小号字体，只能自己缩放）。 */
+    private static final float NOTE_SCALE = 0.75f;
+
+    private String enOnlyNoteText = "";
+    private int enOnlyNoteX;
+    private int enOnlyNoteY;
 
     private final Screen parent;
     private List<Voice> voices = List.of();
@@ -179,6 +186,17 @@ public class ConfigScreen extends Screen {
         addRenderableWidget(advancedButton);
         y += 20;
 
+        // 英文界面限定的吐槽：中文语言文件里这个 key 是空串，所以中文玩家完全看不到、也不占位。
+        // MC 没有小号字体，这里只记坐标，真正的 0.75 缩放绘制放在渲染方法里。
+        enOnlyNoteText = Component.translatable("config.mcvoice.en_only_note").getString();
+        if (!enOnlyNoteText.isEmpty()) {
+            enOnlyNoteX = x;
+            enOnlyNoteY = y;
+            int noteLines = font.split(Component.literal(enOnlyNoteText), (int) (buttonWidth / NOTE_SCALE)).size();
+            // 按缩放后的真实高度预留空间，避免与下方内容重叠或顶出屏幕。
+            y += (int) Math.ceil(noteLines * (font.lineHeight + 1) * NOTE_SCALE) + 6;
+        }
+
         int availableHeight = Math.max(80, height - 66);
         maxScrollY = Math.max(0, (y - 14) - availableHeight);
         int oldScroll = scrollY;
@@ -195,7 +213,7 @@ public class ConfigScreen extends Screen {
             .pos(x, height - 38)
             .size(buttonWidth / 2 - 5, 20)
             .build());
-        addRenderableWidget(Button.builder(Component.literal("返回"),
+        addRenderableWidget(Button.builder(Component.translatable("gui.mcvoice.back"),
                 button -> ScreenUtil.setScreen(parent))
             .pos(centerX + 5, height - 38)
             .size(buttonWidth / 2 - 5, 20)
@@ -204,15 +222,15 @@ public class ConfigScreen extends Screen {
 
     private Component currentVoiceLabel() {
         if (voices.isEmpty()) {
-            return Component.literal("没有可用声线");
+            return Component.translatable("config.mcvoice.voice.none");
         }
         for (Voice voice : voices) {
             if (voice.getId().equals(ModConfig.get().selectedVoice)) {
-                return Component.literal("当前声线：" + voice.getDisplayName());
+                return Component.translatable("config.mcvoice.voice.current", ScreenUtil.voiceName(voice));
             }
         }
         // 配置里记录的声线当前不存在（例如模型被删了），如实显示 ID，不冒充别的声线。
-        return Component.literal("当前声线：" + ModConfig.get().selectedVoice);
+        return Component.translatable("config.mcvoice.voice.current", ModConfig.get().selectedVoice);
     }
 
     private void refreshConnectionStatus() {
@@ -231,14 +249,14 @@ public class ConfigScreen extends Screen {
             pvConnected ? 2 : pvInstalled ? 1 : 0));
 
         if (!svcConnected && !pvConnected) {
-            localWarningWidget.setMessage(Component.literal("模组仅可以在本地生效，他人无法听到").withColor(COLOR_RED));
+            localWarningWidget.setMessage(Component.translatable("config.mcvoice.warn.local_only").withColor(COLOR_RED));
         } else {
             localWarningWidget.setMessage(Component.literal(""));
         }
 
         if (pvInstalled && !pvConnected) {
             pvWarningWidget.setMessage(
-                Component.literal("Plasmo语音需要服务器安装MCvoice才可生效").withColor(COLOR_YELLOW));
+                Component.translatable("config.mcvoice.warn.pv_needs_server").withColor(COLOR_YELLOW));
         } else {
             pvWarningWidget.setMessage(Component.literal(""));
         }
@@ -246,9 +264,9 @@ public class ConfigScreen extends Screen {
 
     private static Component statusComponent(String name, int state) {
         return switch (state) {
-            case 0 -> Component.literal(name + " (未连接)").withColor(COLOR_RED);
-            case 1 -> Component.literal(name + " (已安装,未连接)").withColor(COLOR_YELLOW);
-            default -> Component.literal(name + " (已连接)").withColor(COLOR_GREEN);
+            case 0 -> Component.translatable("config.mcvoice.state.disconnected", name).withColor(COLOR_RED);
+            case 1 -> Component.translatable("config.mcvoice.state.installed", name).withColor(COLOR_YELLOW);
+            default -> Component.translatable("config.mcvoice.state.connected", name).withColor(COLOR_GREEN);
         };
     }
 
@@ -275,6 +293,16 @@ public class ConfigScreen extends Screen {
     public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
         context.fill(0, 0, width, height, 0xAA101018);
         super.extractRenderState(context, mouseX, mouseY, delta);
+        if (!enOnlyNoteText.isEmpty()) {
+            context.pose().pushMatrix();
+            context.pose().scale(NOTE_SCALE, NOTE_SCALE);
+            int noteLineY = enOnlyNoteY;
+            for (var noteLine : font.split(Component.literal(enOnlyNoteText), (int) (Math.min(320, width - 40) / NOTE_SCALE))) {
+                context.text(font, noteLine, (int) (enOnlyNoteX / NOTE_SCALE), (int) (noteLineY / NOTE_SCALE), COLOR_GREY);
+                noteLineY += (int) ((font.lineHeight + 1) * NOTE_SCALE);
+            }
+            context.pose().popMatrix();
+        }
         drawScrollBar(context);
     }
 

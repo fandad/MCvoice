@@ -33,7 +33,7 @@ public final class ModelDownloadManager {
         if (PiperModelDownloader.hasPartialDownload(modelId)) {
             entry.state = State.RESUMABLE;
             if (statusText == null || statusText.isBlank()) {
-                statusText = "检测到上次未完成的模型下载，点击对应按钮可继续";
+                statusText = DownloadStatus.encode("download.mcvoice.status.resumable");
             }
             return;
         }
@@ -46,7 +46,7 @@ public final class ModelDownloadManager {
         Entry entry = entry(modelId, sherpa);
         if (VoiceRegistry.isModelDownloaded(modelId, sherpa)) {
             entry.state = State.DOWNLOADED;
-            statusText = "已完成：" + label + " 已放入 mcvoice/models";
+            statusText = DownloadStatus.encode("download.mcvoice.status.done", nameToken(modelId));
             return;
         }
         if (entry.state == State.DOWNLOADING || entry.state == State.DOWNLOADED) {
@@ -57,7 +57,7 @@ public final class ModelDownloadManager {
             ? SherpaModelDownloader.hasPartialDownload(modelId)
             : PiperModelDownloader.hasPartialDownload(modelId);
         entry.state = State.DOWNLOADING;
-        statusText = (resumed ? "准备继续下载：" : "准备下载：") + label;
+        statusText = DownloadStatus.encode(resumed ? "download.mcvoice.status.prepare_resume" : "download.mcvoice.status.prepare", nameToken(modelId));
 
         Thread thread = new Thread(() -> {
             try {
@@ -69,7 +69,7 @@ public final class ModelDownloadManager {
                         text -> statusText = text);
                 }
                 entry.state = State.DOWNLOADED;
-                statusText = "已完成：" + label + " 已放入 mcvoice/models";
+                statusText = DownloadStatus.encode("download.mcvoice.status.done", nameToken(modelId));
                 McVoiceConstants.LOGGER.info("模型下载完成：{}", label);
             } catch (Exception e) {
                 String error = e.getMessage() == null ? e.toString() : e.getMessage();
@@ -77,8 +77,8 @@ public final class ModelDownloadManager {
                     ? SherpaModelDownloader.hasPartialDownload(modelId)
                     : PiperModelDownloader.hasPartialDownload(modelId);
                 entry.state = resumable ? State.RESUMABLE : State.FAILED;
-                statusText = "下载失败：" + error
-                    + (resumable ? " · 已保留断点，点击按钮可继续下载" : "");
+                statusText = DownloadStatus.encode(resumable ? "download.mcvoice.status.failed_resumable" : "download.mcvoice.status.failed", error
+                    );
                 McVoiceConstants.LOGGER.warn(
                     "模型下载失败：{}（{}，{}）", label, error, resumable ? "已保留断点" : "无断点", e);
             }
@@ -93,6 +93,12 @@ public final class ModelDownloadManager {
 
     public String statusText() {
         return statusText;
+    }
+
+    /** 状态文案里的模型名：已知模型给翻译 key，未知退回原始 id。 */
+    private static String nameToken(String modelId) {
+        String key = VoiceRegistry.modelNameKey(modelId);
+        return key == null ? modelId : key;
     }
 
     private Entry entry(String modelId, boolean sherpa) {

@@ -16,20 +16,20 @@ import java.util.Set;
 
 public final class VoiceRegistry {
     private static final Map<String, String> PIPER_NAMES = Map.of(
-        "zh_CN-huayan-medium", "中文 · 花颜（女声）",
-        "zh_CN-huayan-x_low", "中文 · 花颜（低配）"
+        "zh_CN-huayan-medium", "piper.huayan_medium",
+        "zh_CN-huayan-x_low", "piper.huayan_xlow"
     );
     private static final Map<String, String> SHERPA_NAMES = Map.of(
-        "vits-melo-tts-zh_en", "中文 · MeloTTS 中英女声",
-        "vits-zh-hf-theresa", "中文 · 寒冰（多音色）",
-        "vits-zh-hf-eula", "中文 · 伊拉（多音色）",
-        "vits-zh-hf-fanchen-wnj", "中文 · 繁辰 WNJ（男声）",
-        "sherpa-onnx-vits-zh-ll", "中文 · 小爱风格（多音色）",
-        "vits-piper-zh_CN-chaowen-medium", "中文 · 超文（男声）",
-        "vits-piper-zh_CN-xiao_ya-medium", "中文 · 小雅",
-        "vits-cantonese-hf-xiaomaiiwn", "粤语 · 小美（女声）",
-        "matcha-icefall-zh-baker", "中文 · Matcha Baker（女声）",
-        "kokoro-int8-multi-lang-v1_0", "中英 · Kokoro 多音色"
+        "vits-melo-tts-zh_en", "sherpa.melo",
+        "vits-zh-hf-theresa", "sherpa.theresa",
+        "vits-zh-hf-eula", "sherpa.eula",
+        "vits-zh-hf-fanchen-wnj", "sherpa.fanchen",
+        "sherpa-onnx-vits-zh-ll", "sherpa.xiaomi",
+        "vits-piper-zh_CN-chaowen-medium", "sherpa.chaowen",
+        "vits-piper-zh_CN-xiao_ya-medium", "sherpa.xiaoya",
+        "vits-cantonese-hf-xiaomaiiwn", "sherpa.cantonese",
+        "matcha-icefall-zh-baker", "sherpa.matcha",
+        "kokoro-int8-multi-lang-v1_0", "sherpa.kokoro"
     );
 
     /**
@@ -37,14 +37,14 @@ public final class VoiceRegistry {
      * 映射来自 sherpa-onnx 官方文档（speaker id 45-52 为中文音色组）。
      */
     private static final Map<Integer, String> KOKORO_ZH_SPEAKERS = Map.of(
-        45, "小北（女声）",
-        46, "小妮（女声）",
-        47, "晓晓（女声）",
-        48, "晓伊（女声）",
-        49, "云健（男声）",
-        50, "云希（男声）",
-        51, "云夏（男声）",
-        52, "云扬（男声）"
+        45, ".spk45",
+        46, ".spk46",
+        47, ".spk47",
+        48, ".spk48",
+        49, ".spk49",
+        50, ".spk50",
+        51, ".spk51",
+        52, ".spk52"
     );
 
     private static final Set<String> KOKORO_DIR_IDS = Set.of("kokoro-int8-multi-lang-v1_0");
@@ -56,20 +56,20 @@ public final class VoiceRegistry {
      */
     private static final Map<String, Map<Integer, String>> VITS_MULTI_SPEAKERS = Map.of(
         "vits-zh-hf-theresa", Map.of(
-            66, "女声 1",
-            436, "女声 2",
-            249, "男声"),
+            66, ".spk66",
+            436, ".spk436",
+            249, ".spk249"),
         "vits-zh-hf-eula", Map.of(
-            66, "女声 1",
-            376, "男声 1",
-            436, "女声 2",
-            623, "男声 2"),
+            66, ".spk66",
+            376, ".spk376",
+            436, ".spk436",
+            623, ".spk623"),
         "sherpa-onnx-vits-zh-ll", Map.of(
-            0, "女声 1",
-            2, "女声 2",
-            1, "男声 1",
-            3, "男声 2",
-            4, "男声 3")
+            0, ".spk0",
+            2, ".spk2",
+            1, ".spk1",
+            3, ".spk3",
+            4, ".spk4")
     );
 
     private VoiceRegistry() {
@@ -106,7 +106,7 @@ public final class VoiceRegistry {
                         if (!isPiperRuntimeCompatible(config)) {
                             return;
                         }
-                        String display = PIPER_NAMES.getOrDefault(id, "中文 · " + id);
+                        String display = id;
                         voices.add(new Voice("piper:" + id, display, Voice.Engine.PIPER,
                             path.toAbsolutePath().toString(), config.toAbsolutePath().toString()));
                     });
@@ -128,7 +128,7 @@ public final class VoiceRegistry {
         }
 
         for (String voiceName : SapiVoices.list()) {
-            voices.add(new Voice("sapi:" + voiceName, "系统声线 · " + voiceName,
+            voices.add(new Voice("sapi:" + voiceName, voiceName,
                 Voice.Engine.SAPI, voiceName, ""));
         }
 
@@ -243,7 +243,7 @@ public final class VoiceRegistry {
             addKokoroVoices(voices, dir, modelFile, tokens, dataDir, id);
             return;
         }
-        String display = SHERPA_NAMES.getOrDefault(id, "中文 · " + id);
+        String display = id;
         String lexPath = Files.isRegularFile(lexicon) ? lexicon.toAbsolutePath().toString() : "";
         String dataPath = dataDir == null ? "" : dataDir.toAbsolutePath().toString();
 
@@ -253,7 +253,7 @@ public final class VoiceRegistry {
             for (Map.Entry<Integer, String> entry : speakers.entrySet()) {
                 voices.add(new Voice(
                     "sherpa:" + id + "#" + entry.getKey(),
-                    display + " · " + entry.getValue(),
+                    display + entry.getValue(),
                     Voice.Engine.SHERPA,
                     modelFile.toAbsolutePath().toString(),
                     "",
@@ -288,12 +288,12 @@ public final class VoiceRegistry {
         Path espeakData = Files.isDirectory(dir.resolve("espeak-ng-data"))
             ? dir.resolve("espeak-ng-data")
             : null;
-        String baseName = SHERPA_NAMES.getOrDefault(id, "中英 · Kokoro");
+        String baseName = id;
         for (Map.Entry<Integer, String> entry : KOKORO_ZH_SPEAKERS.entrySet()) {
             int speakerId = entry.getKey();
             voices.add(new Voice(
                 "kokoro:" + id + ":" + speakerId,
-                baseName + " · " + entry.getValue(),
+                baseName + entry.getValue(),
                 Voice.Engine.KOKORO,
                 modelFile.toAbsolutePath().toString(),
                 "",
@@ -306,6 +306,56 @@ public final class VoiceRegistry {
                 "zh"
             ));
         }
+    }
+
+    /**
+     * 声线显示名的翻译信息：key 后缀（完整 key 为 {@code voice.mcvoice.<suffix>}）与可选参数。
+     * common 模块不能依赖 Minecraft 的 Component，所以这里只产出 key，组装交给界面层。
+     */
+    public record VoiceLabel(String suffix, String arg) {
+    }
+
+    /**
+     * 由声线 id 反推显示名的翻译 key。返回 {@code null} 时调用方退回 {@link Voice#getDisplayName()}。
+     */
+    public static VoiceLabel label(String voiceId) {
+        if (voiceId == null) {
+            return null;
+        }
+        if (voiceId.startsWith("sapi:")) {
+            return new VoiceLabel("sapi", voiceId.substring("sapi:".length()));
+        }
+        if (voiceId.startsWith("kokoro:")) {
+            int last = voiceId.lastIndexOf(':');
+            String speaker = last > 0 ? voiceId.substring(last + 1) : "";
+            return new VoiceLabel("kokoro.spk" + speaker, null);
+        }
+        if (voiceId.startsWith("sherpa:")) {
+            String rest = voiceId.substring("sherpa:".length());
+            int hash = rest.indexOf('#');
+            String dir = hash < 0 ? rest : rest.substring(0, hash);
+            String base = SHERPA_NAMES.get(dir);
+            if (base == null) {
+                return new VoiceLabel("unknown", dir);
+            }
+            return hash < 0
+                ? new VoiceLabel(base, null)
+                : new VoiceLabel(base + ".spk" + rest.substring(hash + 1), null);
+        }
+        String piper = PIPER_NAMES.get(voiceId);
+        return piper == null ? new VoiceLabel("unknown", voiceId) : new VoiceLabel(piper, null);
+    }
+
+    /**
+     * 下载模型 id（模型目录名）对应的短名翻译 key；未知模型返回 {@code null}，调用方退回原始 id。
+     */
+    public static String modelNameKey(String modelId) {
+        String sherpa = SHERPA_NAMES.get(modelId);
+        if (sherpa != null) {
+            return "voice.mcvoice." + sherpa;
+        }
+        String piper = PIPER_NAMES.get(modelId);
+        return piper == null ? null : "voice.mcvoice." + piper;
     }
 
     public static boolean isUsableSherpaModel(Path modelFile, Path tokensFile) {

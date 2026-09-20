@@ -61,7 +61,7 @@ public class ExternalTtsServiceScreen extends Screen {
         addRenderableWidget(enableCheckbox);
         y += 20;
 
-        Button modeButton = Button.builder(Component.literal(modeLabel()), button -> cycleMode())
+        Button modeButton = Button.builder(modeLabel(), button -> cycleMode())
             .pos(x, y)
             .size(buttonWidth, 20)
             .build();
@@ -83,7 +83,7 @@ public class ExternalTtsServiceScreen extends Screen {
             }
             ModConfig.save();
             freeRouteButton = Button.builder(
-                    Component.literal(freeRouteLabel()),
+                    freeRouteLabel(),
                     button -> cycleFreeRoute())
                 .pos(x, y)
                 .size(buttonWidth, 20)
@@ -96,12 +96,12 @@ public class ExternalTtsServiceScreen extends Screen {
 
         AbstractSliderButton serviceVolumeSlider = new AbstractSliderButton(
             x, y, buttonWidth, 20,
-            Component.literal("服务输出音量：" + Math.round(ModConfig.get().serviceVolume) + "%"),
+            Component.translatable("config.mcvoice.external.service.volume.label", Math.round(ModConfig.get().serviceVolume)),
             Math.max(0.0, Math.min(1.0, ModConfig.get().serviceVolume / 200.0))
         ) {
             @Override
             protected void updateMessage() {
-                setMessage(Component.literal("服务输出音量：" + Math.round(value * 200) + "%"));
+                setMessage(Component.translatable("config.mcvoice.external.service.volume.label", Math.round(value * 200)));
             }
 
             @Override
@@ -116,10 +116,10 @@ public class ExternalTtsServiceScreen extends Screen {
 
         if (!freeMode()) {
             addRenderableWidget(new StringWidget(x, y, buttonWidth, 10,
-                Component.literal(urlLabel()), font));
+                urlLabel(), font));
             y += 11;
             urlBox = new EditBox(font, x, y, buttonWidth, 20,
-                Component.literal(urlHint()));
+                urlHint());
             urlBox.setMaxLength(1000);
             urlBox.setValue(ModConfig.get().serviceUrl);
             urlBox.setResponder(text -> {
@@ -148,7 +148,7 @@ public class ExternalTtsServiceScreen extends Screen {
                 Component.translatable("config.mcvoice.external.service.voice.label"), font));
             y += 11;
             voiceChoiceButton = Button.builder(
-                    Component.literal(freeVoiceLabel(currentFreeVoice())),
+                    freeVoiceLabel(currentFreeVoice()),
                     button -> cycleFreeVoice())
                 .pos(x, y)
                 .size(buttonWidth, 20)
@@ -158,10 +158,10 @@ public class ExternalTtsServiceScreen extends Screen {
             addRenderableWidget(voiceChoiceButton);
         } else {
             addRenderableWidget(new StringWidget(x, y, buttonWidth, 10,
-                Component.literal(keyLabel()), font));
+                keyLabel(), font));
             y += 11;
             keyBox = new EditBox(font, x, y, buttonWidth, 20,
-                Component.literal(keyHint()));
+                keyHint());
             keyBox.setMaxLength(1000);
             keyBox.setValue(ModConfig.get().serviceApiKey);
             keyBox.setResponder(text -> {
@@ -173,10 +173,10 @@ public class ExternalTtsServiceScreen extends Screen {
             y += 30;
 
             addRenderableWidget(new StringWidget(x, y, buttonWidth, 10,
-                Component.literal(voiceLabel()), font));
+                voiceLabel(), font));
             y += 11;
             voiceBox = new EditBox(font, x, y, buttonWidth, 20,
-                Component.literal(voiceHint()));
+                voiceHint());
             voiceBox.setMaxLength(200);
             voiceBox.setValue(ModConfig.get().serviceVoice);
             voiceBox.setResponder(text -> {
@@ -188,10 +188,10 @@ public class ExternalTtsServiceScreen extends Screen {
             y += 30;
 
             addRenderableWidget(new StringWidget(x, y, buttonWidth, 10,
-                Component.literal(modelLabel()), font));
+                modelLabel(), font));
             y += 11;
             modelBox = new EditBox(font, x, y, buttonWidth, 20,
-                Component.literal(modelHint()));
+                modelHint());
             modelBox.setMaxLength(200);
             modelBox.setValue(ModConfig.get().serviceModel);
             modelBox.setResponder(text -> {
@@ -211,7 +211,7 @@ public class ExternalTtsServiceScreen extends Screen {
             return;
         }
 
-        addRenderableWidget(Button.builder(Component.literal("返回"),
+        addRenderableWidget(Button.builder(Component.translatable("gui.mcvoice.back"),
                 button -> ScreenUtil.setScreen(parent))
             .pos(centerX - 50, height - 32)
             .size(100, 20)
@@ -228,13 +228,13 @@ public class ExternalTtsServiceScreen extends Screen {
         return true;
     }
 
-    private String modeLabel() {
+    private Component modeLabel() {
         if (ExternalServiceEngine.isFreeMode(ModConfig.get().serviceMode)) {
-            return "请求方式：免费 TTS";
+            return Component.translatable("config.mcvoice.external.service.mode.free");
         }
         return "openai".equalsIgnoreCase(ModConfig.get().serviceMode)
-            ? "请求方式：OpenAI兼容"
-            : "请求方式：URL模板";
+            ? Component.translatable("config.mcvoice.external.service.mode.openai")
+            : Component.translatable("config.mcvoice.external.service.mode.url");
     }
 
     private void cycleMode() {
@@ -260,50 +260,50 @@ public class ExternalTtsServiceScreen extends Screen {
         return ExternalServiceEngine.isFreeMode(ModConfig.get().serviceMode);
     }
 
-    private String urlLabel() {
-        return "服务地址";
+    private Component urlLabel() {
+        return Component.translatable("config.mcvoice.external.service.url.label");
     }
 
-    private String urlHint() {
+    private Component urlHint() {
         if (freeMode()) {
-            return "https://ttsapi.cn";
+            return Component.literal("https://ttsapi.cn");
         }
         return "openai".equalsIgnoreCase(ModConfig.get().serviceMode)
-            ? "https://api.openai.com/v1/audio/speech"
-            : "http://127.0.0.1:9880?text={text}&voice={voice}";
+            ? Component.literal("https://api.openai.com/v1/audio/speech")
+            : Component.literal("http://127.0.0.1:9880?text={text}&voice={voice}");
     }
 
-    private String keyLabel() {
-        return "API Key";
+    private Component keyLabel() {
+        return Component.translatable("config.mcvoice.external.service.key.label");
     }
 
-    private String keyHint() {
-        return "留空表示不需要鉴权";
+    private Component keyHint() {
+        return Component.translatable("config.mcvoice.external.service.key.hint");
     }
 
-    private String voiceLabel() {
-        return "音色";
+    private Component voiceLabel() {
+        return Component.translatable("config.mcvoice.external.service.voice.label");
     }
 
-    private String voiceHint() {
-        return freeMode() ? "例如 female_zhubo" : "例如 zh-CN-XiaoyiNeural";
+    private Component voiceHint() {
+        return freeMode() ? Component.translatable("config.mcvoice.external.service.voice.hint.free") : Component.translatable("config.mcvoice.external.service.voice.hint.edge");
     }
 
-    private String modelLabel() {
-        return "模型";
+    private Component modelLabel() {
+        return Component.translatable("config.mcvoice.external.service.model.label");
     }
 
-    private String modelHint() {
-        return "例如 tts-1，留空也可以";
+    private Component modelHint() {
+        return Component.translatable("config.mcvoice.external.service.model.hint");
     }
 
     @Override
     public void tick() {
         if (voiceChoiceButton != null) {
-            voiceChoiceButton.setMessage(Component.literal(freeVoiceLabel(currentFreeVoice())));
+            voiceChoiceButton.setMessage(freeVoiceLabel(currentFreeVoice()));
         }
         if (freeRouteButton != null) {
-            freeRouteButton.setMessage(Component.literal(freeRouteLabel()));
+            freeRouteButton.setMessage(freeRouteLabel());
         }
         super.tick();
     }
@@ -378,16 +378,16 @@ public class ExternalTtsServiceScreen extends Screen {
         );
     }
 
-    private String freeRouteLabel() {
+    private Component freeRouteLabel() {
         String url = ModConfig.get().serviceUrl == null ? "" : ModConfig.get().serviceUrl;
         String route = normalizeRoute(url);
         if (EDGE_DIRECT.equals(route)) {
-            return "免费线路：微软 Edge 直连";
+            return Component.translatable("config.mcvoice.external.service.route.edge");
         }
         if (APIZERO_URL.equals(route)) {
-            return "免费线路：apizero（四川话等）";
+            return Component.translatable("config.mcvoice.external.service.route.apizero");
         }
-        return "免费线路：" + route;
+        return Component.translatable("config.mcvoice.external.service.route.other", route);
     }
 
     private String currentFreeVoice() {
@@ -425,38 +425,38 @@ public class ExternalTtsServiceScreen extends Screen {
         return url == null ? "" : url;
     }
 
-    private String freeVoiceLabel(String voice) {
+    private Component freeVoiceLabel(String voice) {
         switch (voice) {
             case "female_zhubo":
-                return "音色：女声主播";
+                return Component.translatable("config.mcvoice.freevoice.female_host");
             case "male_zhubo":
-                return "音色：男声主播";
+                return Component.translatable("config.mcvoice.freevoice.male_host");
             case "male_rap":
-                return "音色：男声说唱";
+                return Component.translatable("config.mcvoice.freevoice.male_rap");
             case "female_sichuan":
-                return "音色：男声四川话";
+                return Component.translatable("config.mcvoice.freevoice.male_sichuan");
             case "male_db":
-                return "音色：男声低沉";
+                return Component.translatable("config.mcvoice.freevoice.male_deep");
             case "zh-CN-XiaoyiNeural":
-                return "音色：晓伊";
+                return Component.translatable("config.mcvoice.freevoice.xiaoyi");
             case "zh-CN-XiaoxiaoNeural":
-                return "音色：晓晓";
+                return Component.translatable("config.mcvoice.freevoice.xiaoxiao");
             case "zh-CN-YunxiNeural":
-                return "音色：云希";
+                return Component.translatable("config.mcvoice.freevoice.yunxi");
             case "zh-CN-YunjianNeural":
-                return "音色：云健";
+                return Component.translatable("config.mcvoice.freevoice.yunjian");
             case "zh-CN-XiaoshuangNeural":
-                return "音色：晓双";
+                return Component.translatable("config.mcvoice.freevoice.xiaoshuang");
             case "zh-CN-YunyangNeural":
-                return "音色：云扬";
+                return Component.translatable("config.mcvoice.freevoice.yunyang");
             case "zh-CN-liaoning-XiaobeiNeural":
-                return "音色：小北（东北话）";
+                return Component.translatable("config.mcvoice.freevoice.xiaobei");
             case "zh-CN-shaanxi-XiaoniNeural":
-                return "音色：小妮（陕西话）";
+                return Component.translatable("config.mcvoice.freevoice.xiaoni");
             case "zh-CN-sichuan-YunxiNeural":
-                return "音色：云希（四川话）";
+                return Component.translatable("config.mcvoice.freevoice.yunxi_sichuan");
             default:
-                return "音色：" + voice;
+                return Component.translatable("config.mcvoice.freevoice.other", voice);
         }
     }
 

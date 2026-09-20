@@ -67,7 +67,7 @@ public class VoiceSelectScreen extends Screen {
         int cursorY = LIST_TOP - scrollY;
         for (Voice voice : voices) {
             boolean current = voice.getId().equals(selected);
-            Button button = Button.builder(Component.literal(voice.getDisplayName()), b -> choose(voice))
+            Button button = Button.builder(ScreenUtil.voiceName(voice), b -> choose(voice))
                 .pos(x, cursorY)
                 .size(buttonWidth, 18)
                 .build();

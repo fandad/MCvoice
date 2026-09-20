@@ -35,12 +35,12 @@ public class AdvancedConfigScreen extends Screen {
 
         AbstractSliderButton volumeSlider = new AbstractSliderButton(
             x, y, buttonWidth, 20,
-            Component.literal("音量：" + Math.round(ModConfig.get().volume * 100) + "%"),
+            Component.translatable("config.mcvoice.volume.label", Math.round(ModConfig.get().volume * 100)),
             Math.max(0.0, Math.min(1.0, ModConfig.get().volume / 2.0))
         ) {
             @Override
             protected void updateMessage() {
-                setMessage(Component.literal("音量：" + Math.round(value * 200) + "%"));
+                setMessage(Component.translatable("config.mcvoice.volume.label", Math.round(value * 200)));
             }
 
             @Override
@@ -55,12 +55,12 @@ public class AdvancedConfigScreen extends Screen {
 
         AbstractSliderButton distanceSlider = new AbstractSliderButton(
             x, y, buttonWidth, 20,
-            Component.literal("传播距离：" + Math.round(ModConfig.get().distance) + " 格"),
+            Component.translatable("config.mcvoice.distance.label", Math.round(ModConfig.get().distance)),
             Math.max(0.0, Math.min(1.0, (ModConfig.get().distance - 1.0) / 127.0))
         ) {
             @Override
             protected void updateMessage() {
-                setMessage(Component.literal("传播距离：" + Math.round(1 + value * 127) + " 格"));
+                setMessage(Component.translatable("config.mcvoice.distance.label", Math.round(1 + value * 127)));
             }
 
             @Override
@@ -115,17 +115,26 @@ public class AdvancedConfigScreen extends Screen {
         serviceButton.setTooltip(Tooltip.create(Component.translatable("config.mcvoice.external.service.tooltip")));
         addRenderableWidget(serviceButton);
 
+        Button audioOutputButton = Button.builder(
+                Component.translatable("config.mcvoice.audioout.open"),
+                button -> ScreenUtil.setScreen(new AudioOutputScreen(this)))
+            .pos(x, y + 24)
+            .size(buttonWidth, 20)
+            .build();
+        audioOutputButton.setTooltip(Tooltip.create(Component.translatable("config.mcvoice.audioout.tooltip")));
+        addRenderableWidget(audioOutputButton);
+
         MultiLineTextWidget explanation = new MultiLineTextWidget(
             Component.translatable("config.mcvoice.external.command.explain"), font);
         explanation.setX(x);
-        explanation.setY(y + 24);
+        explanation.setY(y + 48);
         explanation.setMaxWidth(buttonWidth);
         explanation.setMaxRows(4);
         explanation.setCentered(false);
         addRenderableWidget(explanation);
 
         int availableHeight = Math.max(80, height - 66);
-        maxScrollY = Math.max(0, (y + 110) - availableHeight);
+        maxScrollY = Math.max(0, (y + 134) - availableHeight);
         int oldScroll = scrollY;
         scrollY = Math.max(0, Math.min(scrollY, maxScrollY));
         if (scrollY != oldScroll) {
@@ -133,7 +142,7 @@ public class AdvancedConfigScreen extends Screen {
             return;
         }
 
-        addRenderableWidget(Button.builder(Component.literal("返回"),
+        addRenderableWidget(Button.builder(Component.translatable("gui.mcvoice.back"),
                 button -> ScreenUtil.setScreen(parent))
             .pos(centerX - 50, height - 32)
             .size(100, 20)

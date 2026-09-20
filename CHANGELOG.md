@@ -1,5 +1,33 @@
 # MCvoice 更新说明 / Changelog
 
+## 0.2.7
+
+English:
+
+- Added English interface translations (`en_us.json`) and moved the previously hardcoded Chinese UI text into translation keys: back buttons, volume and range labels, voice names in the picker, connection-state texts, the whole external TTS service screen, the speech screen's history and linger labels, the whole model download screen, the Simple Voice Chat volume category, and the mod metadata shown in Mod Menu. Both language files now hold 225 keys with no difference in the key sets. Players whose client language is not Chinese no longer see raw translation keys or untranslated Chinese text.
+- The English interface carries a small grey note explaining that this mod is Chinese-first and that most model download sources are inside mainland China.
+- New audio output settings (Advanced settings -> Audio output): every spoken line can additionally be sent to a chosen output device. The typical use is a virtual audio cable (VB-CABLE / VoiceMeeter): the mod writes into the cable input, and other applications (voice chat, recording, streaming) select the matching cable output as their microphone, so what you type in game becomes a microphone input there. Three output modes (in game only = default, external device only, both), an independent volume slider for the external copy (0-200%), and a device list that is rescanned on every visit, detects virtual cables, marks them as recommended and lists them first.
+- Every control in the new screen has a bilingual tooltip, and the list never overflows the screen.
+- The default behaviour is unchanged: the output mode defaults to "in game only", in which the mod never opens an output device at all.
+- Fixed: registering the Simple Voice Chat volume category could fail, which aborted the rest of the connection handler and left the local playback channel uncreated - the symptom was hearing nothing at all in game. The channel is now created first and category registration is isolated.
+- Fixed: the selected output device was not always the device that actually received the audio (Java Sound resolves global line lookups by provider order); lines are now opened on the selected mixer.
+- Fixed: stuttering speech. The playback loop did its per-frame work and then slept a fixed 20 ms, so every frame took longer than the 20 ms of audio it carried and the audio engine was permanently starved. The loop now paces against an absolute deadline: measured 26.7 ms -> 20.0 ms per frame.
+- Fixed: with "external device only" selected but no device chosen (or the device failing to open) the audio became completely silent; it now falls back to in-game playback and logs the reason.
+- All four builds (26.x, 1.21.11, 1.21.8, 1.21.1) are updated to 0.2.7.
+
+中文：
+
+- 新增英文界面语言文件（`en_us.json`），并把原先硬编码在代码里的中文界面文案全部改为翻译 key：返回按钮、音量/传播距离标签、声线选择列表里的声线名、连接状态、整个外部 TTS 服务页、说话界面的历史与滞留模式、整个模型下载页、Simple Voice Chat 的音量分类名，以及 Mod Menu 里显示的模组元数据。两个语言文件现在各 225 个键、键集合零差异。非中文客户端不再看到裸键名或未翻译的中文。
+- 英文界面下方加了一行灰色说明：本模组以中文为主，模型下载源大多在中国大陆境内。
+- 新增音频输出设置（高级设置 → 音频输出设置）：说话时除游戏内播放外，可以再送一路到指定输出设备。典型用法是虚拟声卡（VB-CABLE / VoiceMeeter）：模组写进虚拟声卡的输入端，其他软件（语音、录制、直播）把对应的输出端选作麦克风，于是你在游戏里打的字就能被当成麦克风输入。提供三种输出方式（只在游戏内=默认、只送外部设备、两边都放）、外部那一路的独立音量（0-200%），设备列表每次进入都重新扫描、自动识别虚拟声卡并标注推荐、排在列表最前。
+- 新界面的每个控件都有中英双语悬浮注释，内容不会溢出屏幕。
+- 默认行为没有变化：输出方式默认"只在游戏内"，这种情况下模组完全不会打开任何输出设备。
+- 修复：Simple Voice Chat 的音量分类注册可能失败，导致连接回调后面的代码整段不执行、本地播放通道建不起来，表现为游戏内完全听不到自己的声音。现在先建通道，分类注册单独兜异常。
+- 修复：选中的输出设备不一定真的收到声音（Java Sound 的全局取线顺序问题），现在改为在选中的 mixer 上开线。
+- 修复：说话卡顿。播放循环原来是"做完本帧的工作再固定睡 20ms"，每帧实际耗时超过它所承载的 20ms 音频，音频引擎持续欠载，加了 PV 发送或设备写入后必然触发。现在按绝对时间对齐，实测每帧 26.7ms → 20.0ms。
+- 修复：选择"只送外部设备"但没选设备（或设备打不开）时声音会彻底消失；现在会自动回退成游戏内播放，并在日志里写明原因。
+- 四个构建（26.x、1.21.11、1.21.8、1.21.1）同步更新到 0.2.7。
+
 ## 0.2.6
 
 English:
