@@ -25,9 +25,9 @@ public class ConfigScreen extends Screen {
     /** 英文吐槽的绘制缩放（MC 没有小号字体，只能自己缩放）。 */
     private static final float NOTE_SCALE = 0.75f;
 
-    private String enOnlyNoteText = "";
-    private int enOnlyNoteX;
-    private int enOnlyNoteY;
+    private final java.util.List<String> noteTexts = new java.util.ArrayList<>();
+    private final java.util.List<Integer> noteYs = new java.util.ArrayList<>();
+    private int noteX;
 
     private final Screen parent;
     private List<Voice> voices = List.of();
@@ -186,13 +186,19 @@ public class ConfigScreen extends Screen {
         addRenderableWidget(advancedButton);
         y += 20;
 
-        // 英文界面限定的吐槽：中文语言文件里这个 key 是空串，所以中文玩家完全看不到、也不占位。
+        // 英文界面限定的小灰字（中文语言文件里这两个 key 都是空串，所以中文玩家完全看不到、也不占位）。
         // MC 没有小号字体，这里只记坐标，真正的 0.75 缩放绘制放在渲染方法里。
-        enOnlyNoteText = Component.translatable("config.mcvoice.en_only_note").getString();
-        if (!enOnlyNoteText.isEmpty()) {
-            enOnlyNoteX = x;
-            enOnlyNoteY = y;
-            int noteLines = font.split(Component.literal(enOnlyNoteText), (int) (buttonWidth / NOTE_SCALE)).size();
+        noteX = x;
+        noteTexts.clear();
+        noteYs.clear();
+        for (String noteKey : new String[]{"config.mcvoice.en_only_note", "config.mcvoice.ext_note"}) {
+            String noteText = Component.translatable(noteKey).getString();
+            if (noteText.isEmpty()) {
+                continue;
+            }
+            noteTexts.add(noteText);
+            noteYs.add(y);
+            int noteLines = font.split(Component.literal(noteText), (int) (buttonWidth / NOTE_SCALE)).size();
             // 按缩放后的真实高度预留空间，避免与下方内容重叠或顶出屏幕。
             y += (int) Math.ceil(noteLines * (font.lineHeight + 1) * NOTE_SCALE) + 6;
         }
@@ -293,12 +299,13 @@ public class ConfigScreen extends Screen {
     public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
         context.fill(0, 0, width, height, 0xAA101018);
         super.extractRenderState(context, mouseX, mouseY, delta);
-        if (!enOnlyNoteText.isEmpty()) {
+        for (int noteIndex = 0; noteIndex < noteTexts.size(); noteIndex++) {
+            String noteText = noteTexts.get(noteIndex);
             context.pose().pushMatrix();
             context.pose().scale(NOTE_SCALE, NOTE_SCALE);
-            int noteLineY = enOnlyNoteY;
-            for (var noteLine : font.split(Component.literal(enOnlyNoteText), (int) (Math.min(320, width - 40) / NOTE_SCALE))) {
-                context.text(font, noteLine, (int) (enOnlyNoteX / NOTE_SCALE), (int) (noteLineY / NOTE_SCALE), COLOR_GREY);
+            int noteLineY = noteYs.get(noteIndex);
+            for (var noteLine : font.split(Component.literal(noteText), (int) (Math.min(320, width - 40) / NOTE_SCALE))) {
+                context.text(font, noteLine, (int) (noteX / NOTE_SCALE), (int) (noteLineY / NOTE_SCALE), COLOR_GREY);
                 noteLineY += (int) ((font.lineHeight + 1) * NOTE_SCALE);
             }
             context.pose().popMatrix();

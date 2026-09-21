@@ -4,8 +4,9 @@
 
 English:
 
-- Added English interface translations (`en_us.json`) and moved the previously hardcoded Chinese UI text into translation keys: back buttons, volume and range labels, voice names in the picker, connection-state texts, the whole external TTS service screen, the speech screen's history and linger labels, the whole model download screen, the Simple Voice Chat volume category, and the mod metadata shown in Mod Menu. Both language files now hold 225 keys with no difference in the key sets. Players whose client language is not Chinese no longer see raw translation keys or untranslated Chinese text.
-- The English interface carries a small grey note explaining that this mod is Chinese-first and that most model download sources are inside mainland China.
+- Added English interface translations (`en_us.json`) and moved the previously hardcoded Chinese UI text into translation keys: back buttons, volume and range labels, voice names in the picker, connection-state texts, the whole external TTS service screen, the speech screen's history and linger labels, the whole model download screen, the Simple Voice Chat volume category, and the mod metadata shown in Mod Menu. Both language files now hold 227 keys with no difference in the key sets. Players whose client language is not Chinese no longer see raw translation keys or untranslated Chinese text.
+- The English interface carries two small grey notes: the first says the UI was only ever meant to be Chinese and that most model download sources are inside mainland China; the second (in parentheses) says that plenty of interfaces and built-in engines are left open for players who have their own model or prefer their own approach - open the mod folder, or configure the model you want in Advanced settings.
+- The audio output screen shows a hint under the external volume slider: that volume mainly follows the system settings, so changing it there may have no effect.
 - New audio output settings (Advanced settings -> Audio output): every spoken line can additionally be sent to a chosen output device. The typical use is a virtual audio cable (VB-CABLE / VoiceMeeter): the mod writes into the cable input, and other applications (voice chat, recording, streaming) select the matching cable output as their microphone, so what you type in game becomes a microphone input there. Three output modes (in game only = default, external device only, both), an independent volume slider for the external copy (0-200%), and a device list that is rescanned on every visit, detects virtual cables, marks them as recommended and lists them first.
 - Every control in the new screen has a bilingual tooltip, and the list never overflows the screen.
 - The default behaviour is unchanged: the output mode defaults to "in game only", in which the mod never opens an output device at all.
@@ -18,7 +19,8 @@ English:
 中文：
 
 - 新增英文界面语言文件（`en_us.json`），并把原先硬编码在代码里的中文界面文案全部改为翻译 key：返回按钮、音量/传播距离标签、声线选择列表里的声线名、连接状态、整个外部 TTS 服务页、说话界面的历史与滞留模式、整个模型下载页、Simple Voice Chat 的音量分类名，以及 Mod Menu 里显示的模组元数据。两个语言文件现在各 225 个键、键集合零差异。非中文客户端不再看到裸键名或未翻译的中文。
-- 英文界面下方加了一行灰色说明：本模组以中文为主，模型下载源大多在中国大陆境内。
+- 英文界面下方有两行小灰字：第一行说明界面本来只打算做中文、模型下载源大多在中国大陆境内；第二行（括号内）说明有自己的模型、或想用自己的办法的人，接口和内置引擎都留足了 —— 自己打开模组文件夹，或直接在高级设置里配置想要的模型。
+- 音频输出界面在外部音量滑条下方新增提示：这一路音量主要跟随系统设置，在这里调整可能无效。
 - 新增音频输出设置（高级设置 → 音频输出设置）：说话时除游戏内播放外，可以再送一路到指定输出设备。典型用法是虚拟声卡（VB-CABLE / VoiceMeeter）：模组写进虚拟声卡的输入端，其他软件（语音、录制、直播）把对应的输出端选作麦克风，于是你在游戏里打的字就能被当成麦克风输入。提供三种输出方式（只在游戏内=默认、只送外部设备、两边都放）、外部那一路的独立音量（0-200%），设备列表每次进入都重新扫描、自动识别虚拟声卡并标注推荐、排在列表最前。
 - 新界面的每个控件都有中英双语悬浮注释，内容不会溢出屏幕。
 - 默认行为没有变化：输出方式默认"只在游戏内"，这种情况下模组完全不会打开任何输出设备。

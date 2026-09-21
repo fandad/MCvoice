@@ -27,8 +27,10 @@ import java.util.List;
 public class AudioOutputScreen extends Screen {
     private static final int ROW_STEP = 20;
     private static final int BUTTON_HEIGHT = 18;
-    /** 设备列表的起始内容坐标（未滚动）。 */
-    private static final int LIST_TOP = 100;
+    /** 音量提示文字的起始内容坐标（未滚动）。 */
+    private static final int NOTE_Y = 78;
+    /** 提示文字与小标题之间的留白。 */
+    private static final int SECTION_GAP = 4;
     /** 底部按钮预留高度，保证内容能被滚到、也不与返回按钮重叠。 */
     private static final int BOTTOM_RESERVE = 96;
     /** 说明文字的预留行数（多留一行，宁多勿少，避免溢出屏幕）。 */
@@ -85,11 +87,24 @@ public class AudioOutputScreen extends Screen {
         volumeSlider.setTooltip(Tooltip.create(Component.translatable("config.mcvoice.audioout.volume.tooltip")));
         addRenderableWidget(volumeSlider);
 
-        addRenderableWidget(new StringWidget(x, 80 - scrollY, buttonWidth, 10,
+        // 双语提示：虚拟声卡那一路的音量常常由系统/驱动决定，这里的滑条未必起作用。
+        int noteLines = Math.max(1, Math.min(2,
+            font.split(Component.translatable("config.mcvoice.audioout.volume.note"), buttonWidth).size()));
+        MultiLineTextWidget volumeNote = new MultiLineTextWidget(
+            Component.translatable("config.mcvoice.audioout.volume.note"), font);
+        volumeNote.setX(x);
+        volumeNote.setY(NOTE_Y - scrollY);
+        volumeNote.setMaxWidth(buttonWidth);
+        volumeNote.setMaxRows(2);
+        volumeNote.setCentered(false);
+        addRenderableWidget(volumeNote);
+
+        int sectionY = NOTE_Y + noteLines * (font.lineHeight + 1) + SECTION_GAP;
+        addRenderableWidget(new StringWidget(x, sectionY - scrollY, buttonWidth, 10,
             Component.translatable("config.mcvoice.audioout.section"), font));
 
         // contentY 只用于算滚动上限（不含 scrollY）；listY 才是实际摆放坐标。
-        int contentY = LIST_TOP;
+        int contentY = sectionY + 14;
         int listY = contentY - scrollY;
         String current = ModConfig.get().audioOutDevice == null ? "" : ModConfig.get().audioOutDevice;
         if (ordered.isEmpty()) {

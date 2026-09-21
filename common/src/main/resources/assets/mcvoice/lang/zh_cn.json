@@ -206,6 +206,8 @@
   "download.mcvoice.error.bad_range": "下载源返回了不连续的断点范围",
   "download.mcvoice.error.all_sources_failed": "所有下载源都失败了：%s",
   "config.mcvoice.en_only_note": "",
+  "config.mcvoice.ext_note": "",
+  "config.mcvoice.audioout.volume.note": "主要跟随系统设置，这里的声音调整可能无效。",
   "config.mcvoice.audioout.open": "音频输出设置...",
   "config.mcvoice.audioout.tooltip": "把游戏内 TTS 的语音另外送一份到指定的音频输出设备，例如虚拟声卡（VB-CABLE）。这样别的软件把麦克风选成它对应的录制设备后，就能直接听到你在游戏里打的字。",
   "config.mcvoice.audioout.title": "音频输出设置",
