@@ -342,8 +342,13 @@ public final class VoiceRegistry {
                 ? new VoiceLabel(base, null)
                 : new VoiceLabel(base + ".spk" + rest.substring(hash + 1), null);
         }
-        String piper = PIPER_NAMES.get(voiceId);
-        return piper == null ? new VoiceLabel("unknown", voiceId) : new VoiceLabel(piper, null);
+        // Piper 的声线 id 形如 "piper:zh_CN-huayan-medium"，而 PIPER_NAMES 的键是裸目录名，
+        // 必须先去掉前缀再查表，否则会落到 unknown 分支、在选择界面显示成原始 id（0.2.7 修过）。
+        String piperModelId = voiceId.startsWith("piper:")
+            ? voiceId.substring("piper:".length())
+            : voiceId;
+        String piper = PIPER_NAMES.get(piperModelId);
+        return piper == null ? new VoiceLabel("unknown", piperModelId) : new VoiceLabel(piper, null);
     }
 
     /**

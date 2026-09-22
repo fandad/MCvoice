@@ -14,6 +14,7 @@ English:
 - Fixed: the selected output device was not always the device that actually received the audio (Java Sound resolves global line lookups by provider order); lines are now opened on the selected mixer.
 - Fixed: stuttering speech. The playback loop did its per-frame work and then slept a fixed 20 ms, so every frame took longer than the 20 ms of audio it carried and the audio engine was permanently starved. The loop now paces against an absolute deadline: measured 26.7 ms -> 20.0 ms per frame.
 - Fixed: with "external device only" selected but no device chosen (or the device failing to open) the audio became completely silent; it now falls back to in-game playback and logs the reason.
+- Fixed: the two Piper voices (Huayan female and Huayan low) were listed with their raw model id in the voice picker instead of their Chinese name, because the picker looked them up with the full voice id while the name table is keyed by the bare model folder name. The download screen was not affected.
 - All four builds (26.x, 1.21.11, 1.21.8, 1.21.1) are updated to 0.2.7.
 
 中文：
@@ -28,6 +29,7 @@ English:
 - 修复：选中的输出设备不一定真的收到声音（Java Sound 的全局取线顺序问题），现在改为在选中的 mixer 上开线。
 - 修复：说话卡顿。播放循环原来是"做完本帧的工作再固定睡 20ms"，每帧实际耗时超过它所承载的 20ms 音频，音频引擎持续欠载，加了 PV 发送或设备写入后必然触发。现在按绝对时间对齐，实测每帧 26.7ms → 20.0ms。
 - 修复：选择"只送外部设备"但没选设备（或设备打不开）时声音会彻底消失；现在会自动回退成游戏内播放，并在日志里写明原因。
+- 修复：Piper 的两条声线（花颜女声 / 花颜低配）在声线选择界面显示成原始模型 id 而不是中文名 —— 选择界面是拿带 `piper:` 前缀的完整 id 去查名字表，而表的键是裸模型目录名；下载页不受影响。
 - 四个构建（26.x、1.21.11、1.21.8、1.21.1）同步更新到 0.2.7。
 
 ## 0.2.6
