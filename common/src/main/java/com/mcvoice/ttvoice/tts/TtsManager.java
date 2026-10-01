@@ -22,6 +22,12 @@ public final class TtsManager {
     private static final int MAX_PENDING_SPEECH = 8;
     private static final int MAX_TEXT_CHUNK = 200;
 
+    static {
+        // 尽早把 sherpa 的原生 onnxruntime 抢到手：piper 与 sherpa 各带一份同名 onnxruntime.dll，
+        // piper 先加载会让 sherpa 的原生调用读空指针、整个 JVM 直接死（详见 NativeAudioLibs）。
+        NativeAudioLibs.preloadSherpa();
+    }
+
     private static final Queue<short[]> SVC_QUEUE = new ArrayDeque<>();
     private static final AtomicBoolean SPEAKING = new AtomicBoolean(false);
     private static final AtomicLong RUN_ID = new AtomicLong();
@@ -157,6 +163,8 @@ public final class TtsManager {
     }
 
     private static synchronized void ensureEngine() throws Exception {
+        // 幂等；放在这里保证"构造任何引擎之前"一定已经尝试过抢占 sherpa 的原生库。
+        NativeAudioLibs.preloadSherpa();
         if (ModConfig.get().externalServiceTts) {
             if (!ExternalServiceEngine.isFreeMode(ModConfig.get().serviceMode)
                     && (ModConfig.get().serviceUrl == null || ModConfig.get().serviceUrl.isBlank())) {
@@ -207,10 +215,12 @@ public final class TtsManager {
         }
         if (requested.getEngine() == Voice.Engine.PIPER) {
             engine = new PiperEngine(requested);
+            NativeAudioLibs.markPiperLoaded();
             activeVoice = requested;
             return;
         }
         if (requested.getEngine() == Voice.Engine.SHERPA) {
+            NativeAudioLibs.ensureSherpaUsable();
             engine = new SherpaEngine(requested);
             activeVoice = requested;
             return;
