@@ -219,7 +219,9 @@ public final class TtsManager {
             activeVoice = requested;
             return;
         }
-        if (requested.getEngine() == Voice.Engine.SHERPA) {
+        // KOKORO 也由 SherpaEngine 承载（见 SherpaEngine.buildKokoro）：以前漏了这个分支，
+        // Kokoro 声线会落到最后的 "Unknown voice engine"，选中后完全没有声音（0.2.6 起的老缺口）。
+        if (requested.getEngine() == Voice.Engine.SHERPA || requested.getEngine() == Voice.Engine.KOKORO) {
             NativeAudioLibs.ensureSherpaUsable();
             engine = new SherpaEngine(requested);
             activeVoice = requested;

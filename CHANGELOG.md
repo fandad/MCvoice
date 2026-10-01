@@ -16,6 +16,7 @@ English:
 - Fixed: with "external device only" selected but no device chosen (or the device failing to open) the audio became completely silent; it now falls back to in-game playback and logs the reason.
 - Fixed: the two Piper voices (Huayan female and Huayan low) were listed with their raw model id in the voice picker instead of their Chinese name, because the picker looked them up with the full voice id while the name table is keyed by the bare model folder name. The download screen was not affected.
 - Fixed a native crash that killed the whole game process: piper-jni and sherpa-onnx each ship an `onnxruntime.dll` with the same file name, and on Windows whichever one is loaded first wins for the rest of the process. If a Piper voice had been used first, initialising a Sherpa voice crashed inside native code (`EXCEPTION_ACCESS_VIOLATION`, `OfflineTts.newFromFile`) and no Java code could catch it. The mod now claims the Sherpa native library first, so both engines work in the same session, and refuses the dangerous order instead of crashing if that claim fails. Verified outside the game: the previously 100%-reproducible crash sequence now completes on both JDK 26 and JDK 21.
+- Fixed: the Chinese voices of the Kokoro multi-language model produced no sound at all. `VoiceRegistry` lists eight Kokoro voices and `SherpaEngine` implements the Kokoro path, but the engine selection was missing the `KOKORO` case, so it fell through to "unknown engine" and failed silently (present since 0.2.6). Kokoro voices speak normally now (verified outside the game: 166,682 samples, peak 10686).
 - All four builds (26.x, 1.21.11, 1.21.8, 1.21.1) are updated to 0.2.7.
 
 中文：
@@ -32,6 +33,7 @@ English:
 - 修复：选择"只送外部设备"但没选设备（或设备打不开）时声音会彻底消失；现在会自动回退成游戏内播放，并在日志里写明原因。
 - 修复：Piper 的两条声线（花颜女声 / 花颜低配）在声线选择界面显示成原始模型 id 而不是中文名 —— 选择界面是拿带 `piper:` 前缀的完整 id 去查名字表，而表的键是裸模型目录名；下载页不受影响。
 - 修复一处会把整个游戏进程带走的原生崩溃：piper-jni 与 sherpa-onnx 各自都带一份**同名**的 `onnxruntime.dll`，Windows 只保留先加载的那份。若本会话先用过 Piper 声线，再初始化 Sherpa 声线就会崩在原生代码里（`EXCEPTION_ACCESS_VIOLATION`、`OfflineTts.newFromFile`），Java 层完全拦不住。现在模组会抢先占住 Sherpa 的原生库，两种引擎在同一会话里都能正常用，并且万一抢不到也会拒绝危险顺序（报错而不是崩进程）。已脱离游戏验证：原本 100% 必崩的序列在 JDK 26 与 JDK 21 下都能完整跑通。
+- 修复：Kokoro 多语言模型的中文声线选中后完全没有声音。`VoiceRegistry` 会把 8 条 Kokoro 声线列出来、`SherpaEngine` 也实现了 Kokoro 分支，但引擎选择处漏了 `KOKORO` 这一种，导致它落到"未知引擎"分支静默失败（0.2.6 起就存在）。现在 Kokoro 声线可以正常朗读（已脱离游戏实测：合成 166,682 样本、峰值 10686）。
 - 四个构建（26.x、1.21.11、1.21.8、1.21.1）同步更新到 0.2.7。
 
 ## 0.2.6
